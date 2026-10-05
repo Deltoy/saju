@@ -1,1 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#155EEF"/><g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" transform="translate(64 64) scale(16)"><circle cx="12" cy="12" r="10"/></g><path d="M346 166l-38 114a42 42 0 0 1-27 27l-115 39 38-115a42 42 0 0 1 27-27z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#22357A"/><stop offset="1" stop-color="#0E1838"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6D27A"/><stop offset="1" stop-color="#D9A23C"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="0" fill="url(#bg)"/>
+  <!-- 오행 ring: 목 화 토 금 수 (5 arcs) -->
+  <g fill="none" stroke-width="14" stroke-linecap="round" transform="rotate(-90 256 256)">
+    <circle cx="256" cy="256" r="150" stroke="#2FB37A" stroke-dasharray="170 772.5" stroke-dashoffset="0"/>
+    <circle cx="256" cy="256" r="150" stroke="#E5534B" stroke-dasharray="170 772.5" stroke-dashoffset="-188.5"/>
+    <circle cx="256" cy="256" r="150" stroke="#E0A526" stroke-dasharray="170 772.5" stroke-dashoffset="-377"/>
+    <circle cx="256" cy="256" r="150" stroke="#E9EDF5" stroke-dasharray="170 772.5" stroke-dashoffset="-565.5"/>
+    <circle cx="256" cy="256" r="150" stroke="#4C8DF6" stroke-dasharray="170 772.5" stroke-dashoffset="-754"/>
+  </g>
+  <!-- ticks -->
+  <g stroke="#9FB0D8" stroke-width="4" stroke-linecap="round" opacity=".7">
+    <line x1="256" y1="132" x2="256" y2="146"/><line x1="256" y1="366" x2="256" y2="380"/>
+    <line x1="132" y1="256" x2="146" y2="256"/><line x1="366" y1="256" x2="380" y2="256"/>
+  </g>
+  <!-- needle (pointing up-right: 앞으로 나아갈 방향) -->
+  <g transform="rotate(35 256 256)">
+    <path d="M256 140 L280 256 L256 268 L232 256 Z" fill="url(#gold)"/>
+    <path d="M256 372 L280 256 L256 244 L232 256 Z" fill="#5B6B95"/>
+  </g>
+  <circle cx="256" cy="256" r="16" fill="#0E1838" stroke="#F6D27A" stroke-width="6"/>
+</svg>
