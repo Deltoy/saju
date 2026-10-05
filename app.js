@@ -2,7 +2,7 @@
 'use strict';
 const S = window.Saju;
 const KEY = 'saju.v1';
-const DEF = { yearBoundary: 'ipchun', sect: 1, theme: 'auto', hideMatch: false, hourPick: {}, wedding: '', areas: {}, focus: {}, activeId: null, partnerId: null };
+const DEF = { yearBoundary: 'ipchun', sect: 1, theme: 'auto', hideMatch: false, hourPick: {}, wedding: '', areas: {}, focus: {}, activeId: null, partnerId: null, tarotMethod: 'rws' };
 const AREA_DEF = { move: '이동·정착', career: '진로·공부', money: '돈·투자', family: '가정·관계' };
 const FOCUS_DEF = { move: '이동 준비', career: '공부', money: '비상금·지출 관리', family: '관계' };
 const $ = (s, el = document) => el.querySelector(s);
@@ -11,7 +11,8 @@ const sgn = x => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(1);
 
 // ── 조사: 받침 따라 을/를 · 이/가 · 은/는 · 과/와 · 으로/로 (영문·숫자는 읽는 소리 기준) ──
 function batchim(w) {
-  const c = String(w).trim().replace(/[\s)\]」'"·.]+$/, '').slice(-1);
+  let c = String(w).trim().replace(/\s*\([^)]*\)\s*$/, '').replace(/[\s\]」'"·.]+$/, '').slice(-1);
+  if (S && S.STEMS.includes(c)) c = S.STEM_KO[S.si(c)]; else if (S && S.BRANCHES.includes(c)) c = S.BRANCH_KO[S.bi(c)];   // 한자 간지는 읽는 소리로
   if (!c) return false;
   const k = c.charCodeAt(0);
   if (k >= 0xAC00 && k <= 0xD7A3) return (k - 0xAC00) % 28 ? ((k - 0xAC00) % 28 === 8 ? 'ㄹ' : true) : false;
@@ -23,8 +24,8 @@ const J = { '을/를': ['을', '를'], '이/가': ['이', '가'], '은/는': ['�
 function josa(w, p) { const b = batchim(w); if (p === '으로/로') return w + (b && b !== 'ㄹ' ? '으로' : '로'); return w + J[p][b ? 0 : 1]; }
 
 function load() {
-  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.profiles)) return { profiles: d.profiles, settings: { ...DEF, ...d.settings }, plans: d.plans || {} }; } catch (e) { /* 저장소 막힘 → 빈 상태 */ }
-  return { profiles: [], settings: { ...DEF }, plans: {} };
+  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.profiles)) return { profiles: d.profiles, settings: { ...DEF, ...d.settings }, plans: d.plans || {}, tarot: d.tarot || { daily: {}, history: [] } }; } catch (e) { /* 저장소 막힘 → 빈 상태 */ }
+  return { profiles: [], settings: { ...DEF }, plans: {}, tarot: { daily: {}, history: [] } };
 }
 let db = load();
 /** true = 저장됨. 실패하면 알리고 false */
@@ -61,6 +62,12 @@ const P = {
   arrowUp: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>', shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
   sprout: '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
   chartBar: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16h8"/><path d="M7 11h12"/><path d="M7 6h3"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  sparkle: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  droplet: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  sword: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="m12 6.5 1.6 3.4 3.7.4-2.8 2.5.8 3.6L12 14.6l-3.3 1.8.8-3.6-2.8-2.5 3.7-.4z"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
 };
 const I = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
@@ -338,29 +345,9 @@ function emptyHome() {
     <form class="paste" id="pasteForm"><input type="url" id="pasteIn" placeholder="https://…/#import=…" aria-label="가져오기 링크 붙여넣기" autocomplete="off"><button class="btn" type="submit">${I('link')}가져오기</button></form>
     <button class="btn pri" data-act="add">${I('plus')}직접 입력하기</button></section>`;
 }
-function pageHome() {
-  const p = me();
-  if (!p) return emptyHome();
-  const c = chartOf(p); if (!c) return errCard(p);
-  const v = S.now(c, today(), opts()), M = v.M, adv = lifeAdvice(c, M, v.cls);
+function periodsHtml(c, v) {
   const yv = S.yearView(c, v.year), Dd = v.D, d = v.daeun, nd = v.nextDaeun;
-  const ms = S.months(c, today(), 12, opts());
-  const tags = [];
-  if (v.attack) tags.push(`<span class="tag">${I('target')}공격 타이밍: 부딪쳐도 되는 해, 결과는 내년</span>`);
-  if (Dd && Dd.halfPeak) tags.push('<span class="tag">반쪽 전성기</span>');
-  if (v.Y.samjae) tags.push('<span class="tag bad">삼재 해</span>');
-  const plans = db.plans[planKey(v)] || {};
-  return `<div class="head"><h1>${esc(p.name)}의 나침반</h1><p>${fmtDate(today())} · ${gzKo(M.gz)}월(${md(v.monthStart)}~${md(new Date(v.monthEnd.getTime() - 864e5))})</p></div>
-  <section class="card verdict k-${v.cls}" aria-label="이번 달 흐름">
-    <div class="compass">${dial(v.cls)}
-      <div class="verdict-t"><p class="sub">이번 달은</p><h2>${S.CLASSES[v.cls].name}</h2><p class="vsub">${SUB(v.cls, v.base)}</p>
-        ${readingChips(Dd ? Dd.total : 0, v.Y.total, v.nextY.total)}
-        <p class="lead">${esc(whyText(c, v))}</p>${v.prepBadge ? prepBanner(v) : ''}${tags.length ? `<div class="tags">${tags.join('')}</div>` : ''}
-        ${calcBox([['대운(10년)', sgn(Dd ? Dd.total : 0)], ['세운(올해)', sgn(v.Y.total)], ['월운(이번 달)', sgn(M.total)], ['올해+이번 달', sgn(v.near)], ['합친 점수', sgn(v.S)]], `<p class="small">분류는 대운과 "올해+이번 달"(세운 0.35 : 월운 0.10)로 정해요. 흐름 탭의 해 점수는 올해 세운만 쓰고, 이번 달을 넣지 않아서 숫자가 달라요. 합친 점수 = 대운 0.55 + 세운 0.35 + 월운 0.10.</p>`)}
-      </div>
-    </div>
-  </section>
-  <div class="periods">
+  return `<div class="periods">
     ${d ? `<section class="card period">
       <div class="ch"><h2>${I('building')}10년 회사</h2><span class="sub num">${d.startYear}–${d.endYear} · ${d.startAge}–${d.endAge}세</span></div>
       <div class="gz">${hz2(d.gz)}<span class="sub">${S.ko(d.gz)} 대운 · 10년 흐름 ${TEN_W(Dd.total)}</span></div>
@@ -377,10 +364,32 @@ function pageHome() {
       <div class="tags">${noteTags(v.Y.notes)}${relTags(v.Y.rels)}<span class="tag">다음 해: ${v.nextY.gz} ${NEXT_W(v.nextY.total)}</span></div>
       ${v.Y.pyeongwan ? note(NOTE.pyeongwan) : v.Y.bokeum ? note(NOTE.bokeum) : ''}
     </section>
-  </div>
-  <details class="card fold"><summary class="ch"><h2>${I('calendar')}앞으로 12개월</h2><span class="sub">${esc(monthsSentence(ms, v))}</span><span class="bar strip" aria-hidden="true">${ms.map(m => `<i class="k-${m.cls}"></i>`).join('')}</span></summary>
-    <div class="mlist">${ms.map(m => `<div><b class="num">${m.y % 100}.${String(m.m).padStart(2, '0')}</b>${hz2(m.gz)}${clsPill(m.cls)}</div>`).join('')}</div>
-  </details>
+  </div>`;
+}
+function pageHome() {
+  const p = me();
+  if (!p) return emptyHome();
+  const c = chartOf(p); if (!c) return errCard(p);
+  const v = S.now(c, today(), opts()), M = v.M, adv = lifeAdvice(c, M, v.cls);
+  const Dd = v.D;
+  const ms = S.months(c, today(), 12, opts());
+  const tags = [];
+  if (v.attack) tags.push(`<span class="tag">${I('target')}공격 타이밍: 부딪쳐도 되는 해, 결과는 내년</span>`);
+  if (Dd && Dd.halfPeak) tags.push('<span class="tag">반쪽 전성기</span>');
+  if (v.Y.samjae) tags.push('<span class="tag bad">삼재 해</span>');
+  const plans = db.plans[planKey(v)] || {};
+  return `<div class="head"><h1>${esc(p.name)}의 나침반</h1><p>${fmtDate(today())} · ${gzKo(M.gz)}월(${md(v.monthStart)}~${md(new Date(v.monthEnd.getTime() - 864e5))})</p></div>
+  <section class="card verdict k-${v.cls}" aria-label="이번 달 흐름">
+    <div class="compass">${dial(v.cls)}
+      <div class="verdict-t"><p class="sub">이번 달은</p><h2>${S.CLASSES[v.cls].name}</h2><p class="vsub">${SUB(v.cls, v.base)}</p>
+        ${readingChips(Dd ? Dd.total : 0, v.Y.total, v.nextY.total)}
+        <p class="lead">${esc(whyText(c, v))}</p>${v.prepBadge ? prepBanner(v) : ''}${tags.length ? `<div class="tags">${tags.join('')}</div>` : ''}
+        ${calcBox([['대운(10년)', sgn(Dd ? Dd.total : 0)], ['세운(올해)', sgn(v.Y.total)], ['월운(이번 달)', sgn(M.total)], ['올해+이번 달', sgn(v.near)], ['합친 점수', sgn(v.S)]], `<p class="small">분류는 대운과 "올해+이번 달"(세운 0.35 : 월운 0.10)로 정해요. 흐름 탭의 해 점수는 올해 세운만 쓰고, 이번 달을 넣지 않아서 숫자가 달라요. 합친 점수 = 대운 0.55 + 세운 0.35 + 월운 0.10.</p>`)}
+      </div>
+    </div>
+  </section>
+  ${todayCard(c, p)}
+  ${T ? tarotCard(c, p) : ''}
   <h2 class="sec">이번 달 할 일 · 피할 일<span class="sub">지금 분류(${S.CLASSES[v.cls].name})와 이번 달 글자로 고른 문장이에요</span></h2>
   <div class="areas">${adv.map(a => `<section class="card area">
     <h3>${I(AREA_ICON[a.k])}${esc(area(a.k))}</h3>
@@ -389,7 +398,10 @@ function pageHome() {
     ${a.ctx ? `<p class="small ctx">${esc(a.ctx.t)}</p>${a.ctx.link ? `<a class="btn sm" href="${a.ctx.link[0]}">${I('calendar')}${a.ctx.link[1]}</a>` : ''}` : ''}
     <label class="plan"><span>이번 달 내 계획</span><input type="text" maxlength="80" data-plan="${a.k}" value="${esc(plans[a.k] || '')}" placeholder="예: ${esc(PLAN_EX[a.k])}"></label>
     <p class="plan-c" id="pc-${a.k}" aria-live="polite">${esc(planComment(plans[a.k], v.cls, M, a.k))}</p>
-  </section>`).join('')}</div>`;
+  </section>`).join('')}</div>
+  <details class="card fold"><summary class="ch"><h2>${I('calendar')}앞으로 12개월</h2><span class="sub">${esc(monthsSentence(ms, v))}</span><span class="bar strip" aria-hidden="true">${ms.map(m => `<i class="k-${m.cls}"></i>`).join('')}</span></summary>
+    <div class="mlist">${ms.map(m => `<div><b class="num">${m.y % 100}.${String(m.m).padStart(2, '0')}</b>${hz2(m.gz)}${clsPill(m.cls)}</div>`).join('')}</div>
+  </details>`;
 }
 const PLAN_EX = { move: '비자 서류 목록 만들기', career: '모의고사 2회 풀기', money: '고정비 3개 줄이기', family: '예식장 계약서 확인' };
 const planKey = v => { const k = kst(v.monthStart); return `${k.y}-${String(k.m).padStart(2, '0')}`; };
@@ -420,6 +432,7 @@ function pageFlow() {
   const mb = ms.reduce((a, m) => m.near > a.near ? m : a), mw = ms.reduce((a, m) => m.near < a.near ? m : a);
   const mAria = `앞으로 12개월 막대 그래프. 가장 좋은 달 ${mb.m}월 ${mb.gz}, 가장 낮은 달 ${mw.m}월 ${mw.gz}`;
   return `<div class="head"><h1>흐름</h1><p>대운은 10년 회사, 세운은 1년 거래처예요</p></div>
+  ${periodsHtml(c, v)}
   <section class="card"><div class="ch"><h2>${I('building')}대운 10년 흐름</h2><span class="sub">대운이 바뀌는 나이(대운수) ${c.daeun.su} · ${c.daeun.forward ? '앞으로 도는 순서(순행)' : '거꾸로 도는 순서(역행)'} · 나이는 태어나자마자 1살(세는나이)</span></div>
     <div class="dae">${dl.map((d, i) => `<button data-act="daeun" data-i="${i}" class="k-${dk(dS[i])}" aria-label="${d.gz} 대운 ${d.startYear}년부터 ${d.startAge}세, 10년 흐름 ${TEN_W(dS[i])}"${v.daeun && v.daeun.gz === d.gz ? ' aria-current="true"' : ''}>
       ${hz2(d.gz)}<span class="small num">${d.startYear}– · ${d.startAge}세</span>
@@ -434,7 +447,8 @@ function pageFlow() {
   <section class="card"><div class="ch"><h2>${I('calendar')}앞으로 12개월</h2><span class="sub">${esc(monthsSentence(ms, v))}</span></div>
     <div class="chart" data-chart="months" role="img" aria-label="${esc(mAria)}"></div>
     <div class="legend">${uniq(ms.map(m => m.cls)).map(k => `<span class="k-${k}"><i></i>${S.CLASSES[k].name}</span>`).join('')}<span>막대 = 올해+그달 기운 (세운 0.35 : 월운 0.10), 절기로 나눈 달</span></div>
-  </section>`;
+  </section>
+  ${weekStrip(c)}`;
 }
 function drawCharts() {
   if (!FLOW) return;
@@ -517,6 +531,243 @@ function openDaeun(i) {
 const closeBtn = () => `<button class="x" data-act="close" aria-label="닫기">${I('x')}</button>`;
 function sheet(html) { const d = $('#sheet'); d.innerHTML = `<div class="sh">${html}</div>`; if (!d.open) d.showModal(); }
 
+// ── 오늘의 일진 ──
+const DAY_NAME = { good: '좋은 날', ok: '무난한 날', care: '조심할 날' };
+const DAY_K = { good: 'prep', ok: 'rest', care: 'guard' };
+const DAY_LINE = {
+  good: { push: '오늘은 기운이 좋아요 — 미뤄 둔 일을 하나 시작해 보세요.', guard: '오늘은 기운이 좋아요 — 그래도 새로 벌이기보다 하던 일을 단단히 하는 날이에요.', prep: '오늘은 기운이 좋아요 — 그래도 큰 결정보다 준비한 걸 실행하는 날이에요.', rest: '오늘은 기운이 좋아요 — 무리하지 말고 가볍게 한 가지만 해요.' },
+  ok: { push: '무난한 날이에요 — 계획대로 한 걸음씩 가요.', guard: '무난한 날이에요 — 하던 일을 지키며 정리해요.', prep: '무난한 날이에요 — 준비 목록에서 하나를 끝내 보세요.', rest: '무난한 날이에요 — 쉬어 가도 괜찮아요.' },
+  care: { push: '조금 조심할 날이에요 — 큰 흐름은 좋으니 오늘만 속도를 늦춰요.', guard: '조금 조심할 날이에요 — 계약·말다툼은 하루 미뤄요.', prep: '조금 조심할 날이에요 — 새 일은 미루고 점검만 해요.', rest: '조금 조심할 날이에요 — 일찍 쉬어 가요.' }
+};
+const DAY_TPL = {
+  move: { 비겁: ['같은 길 가는 사람과 정보 나누기', '남과 비교하며 조급해하기'], 식상: ['이주 관련 메일·글 하나 쓰기', '말로만 약속하기'], 재성: ['정착 비용 한 항목 계산하기', '충동적인 큰 결제'], 관성: ['서류 마감일 확인하기', '규정을 짐작으로 넘기기'], 인성: ['필요한 서류 하나 발급·정리하기', '정보만 보고 미루기'] },
+  career: { 비겁: ['동료와 진도 맞추기', '경쟁심에 무리하기'], 식상: ['문제 풀이·실습 한 세트', '이론만 읽고 끝내기'], 재성: ['공부 시간 예산 짜기', '공부 시간을 다른 일에 내주기'], 관성: ['시험·지원 일정 확인하기', '마감 직전 몰아치기'], 인성: ['기초 개념 복습하기', '자료만 모으고 안 보기'] },
+  money: { 비겁: ['오늘 지출 기록하기', '돈 빌려주기·공동 투자 약속'], 식상: ['돈 원칙 한 줄 다시 읽기', '기분 따라 소비하기'], 재성: ['통장·고정비 한 번 훑어보기', '계획 없는 충동 매수'], 관성: ['세금·납부 일정 확인하기', '압박감에 서두른 결정'], 인성: ['약관·계약서 꼼꼼히 읽기', '남이 권한 상품에 그대로 가입하기'] },
+  family: { 비겁: ['둘만의 시간 30분 내기', '주변 말로 상대 판단하기'], 식상: ['고마운 점 한 가지 말하기', '농담처럼 던지는 날 선 말'], 재성: ['함께 쓸 돈 이야기 짧게 나누기', '큰 지출 혼자 정하기'], 관성: ['약속·일정 미리 맞추기', '피곤할 때 중요한 대화'], 인성: ['상대 이야기 끝까지 듣기', '생각만 하고 표현 안 하기'] }
+};
+const LUCKY = ['초록', '빨강', '노랑', '흰색·은색', '검정·남색'];
+const wkOf = ymd => '일월화수목금토'[new Date(ymd + 'T12:00:00').getDay()];
+const mdOf = ymd => `${+ymd.slice(5, 7)}월 ${+ymd.slice(8)}일`;
+function dayGist(dv) {
+  const D = dv.D, g = D.gods[0], parts = [];
+  const need = uniq(D.notes.filter(n => n.k === 'need').map(n => n.t)), over = uniq(D.notes.filter(n => n.k === 'avoid').map(n => n.t));
+  if (need.length) parts.push(`${need.join('·')} 기운이 들어오고`);
+  if (over.length) parts.push(`${over.join('·')} 기운은 조심하고`);
+  const good = uniqRels(D.rels.filter(r => r.s > 0)).map(relTxt), bad = uniqRels(D.rels.filter(r => r.s < 0)).map(relTxt);
+  if (good.length) parts.push(`${good.slice(0, 2).join('·')}이 있고`);
+  if (bad.length) parts.push(`${bad.slice(0, 2).join('·')}은 살펴야 하는`);
+  return `${gzKo(dv.gz)}일 — ${godTxt(g)}의 날이에요.${parts.length ? ' ' + parts.join(', ').replace(/(이 있고|조심하고|들어오고|살펴야 하는)$/, m => ({ '이 있고': '이 있어요.', '조심하고': '조심해요.', '들어오고': '들어와요.', '살펴야 하는': '살펴요.' }[m])) : ''}`;
+}
+function dayBlock(c, dv, cls, opts2 = {}) {
+  const g = dv.D.gods[0].group, A = c.analysis;
+  const hrs = dv.hours.map(h => `<span class="tag">${h.branch}시 ${h.from}–${h.to}${h.rel ? ` · ${esc(relTxt(h.rel))}` : h.need != null ? ` · 필요한 ${elName(h.need)}` : ''}</span>`).join('');
+  return `<p class="lead">${esc(DAY_LINE[dv.label][cls])}</p><p class="small gist">${esc(dayGist(dv))}</p>
+    <details class="more today-more"${opts2.open ? ' open' : ''}><summary>오늘 영역별 할 일·피할 일</summary><ul class="today-areas">${['move', 'career', 'money', 'family'].map(k => `<li><b>${I(AREA_ICON[k])}${esc(area(k))}</b><span class="do">${I('check')}${esc(DAY_TPL[k][g][0])}</span><span class="dont">${I('x')}${esc(DAY_TPL[k][g][1])}</span></li>`).join('')}</ul></details>
+    ${hrs ? `<div class="tags today-hrs"><span class="small">오늘 잘 맞는 시간대</span>${hrs}</div>` : ''}
+    ${A.needed.length ? `<p class="small lucky">행운 색 <span class="sub">(재미로)</span>: ${A.needed.map(e => `<i class="dot e-${ELC[e]}"></i>${LUCKY[e]}`).join(' · ')}</p>` : ''}`;
+}
+function todayCard(c, p) {
+  const dv = S.dayView(c, today(), { sect: db.settings.sect }), cls = S.now(c, today(), opts()).cls;
+  return `<section class="card today" id="todayCard"><div class="ch"><h2>${I('sun')}오늘</h2><span class="sub">${mdOf(dv.ymd)} (${wkOf(dv.ymd)}) · ${gzKo(dv.gz)}일</span><span class="cls k-${DAY_K[dv.label]}">${DAY_NAME[dv.label]}</span></div>
+    ${dayBlock(c, dv, cls)}</section>`;
+}
+function weekStrip(c) {
+  const t0 = today(), days = [];
+  for (let k = -3; k <= 3; k++) { const d = new Date(t0.getTime() + k * 864e5), dv = S.dayView(c, d, { sect: db.settings.sect }); days.push({ dv, k }); }
+  return `<section class="card weekc"><div class="ch"><h2>${I("calendar")}오늘 앞뒤 7일</h2><span class="sub">날을 누르면 그날의 할 일·피할 일이 보여요</span></div>
+    <div class="week">${days.map(({ dv, k }) => `<button data-act="day" data-d="${dv.ymd}" class="k-${DAY_K[dv.label]}"${k === 0 ? ' aria-current="date"' : ''} aria-label="${mdOf(dv.ymd)} ${wkOf(dv.ymd)}요일 ${dv.gz}일 ${DAY_NAME[dv.label]}"><span class="small">${k === 0 ? '오늘' : wkOf(dv.ymd)}</span><b class="num">${+dv.ymd.slice(8)}</b>${hz2(dv.gz)}<span class="dl">${DAY_NAME[dv.label].replace(' 날', '')}</span></button>`).join('')}</div></section>`;
+}
+function openDay(ymd) {
+  const c = chartOf(me()), at = new Date(ymd + 'T12:00:00+09:00'), dv = S.dayView(c, at, { sect: 2 }), cls = S.now(c, at, opts()).cls;
+  sheet(`<div class="top"><div><p class="sub">${mdOf(ymd)} (${wkOf(ymd)}) · 이번 달 ${S.CLASSES[cls].name}</p><h2 id="sheetTitle">${hz2(dv.gz)} ${S.ko(dv.gz)}일</h2></div>${closeBtn()}</div>
+    <div class="tags"><span class="cls k-${DAY_K[dv.label]}">${DAY_NAME[dv.label]}</span></div>${dayBlock(c, dv, cls, { open: true })}
+    ${calcBox([...partsRows(dv.D), ['일진 합계', sgn(dv.D.total)]], '<p class="small">+1 이상 좋은 날, −1 이상 무난한 날, 그 아래는 조심할 날. 일진은 대운·세운 점수에 섞지 않고 따로 봐요.</p>')}`);
+}
+
+// ── 타로 ──
+const T = window.Tarot;
+const SUIT_IC = { w: 'flame', c: 'droplet', s: 'sword', p: 'coin' };
+function cardFace(d, cls = '') {
+  const c = T.byId[d.id];
+  return `<figure class="tcard e-${ELC[c.el]}${d.rev ? ' rev' : ''} ${cls}" role="img" aria-label="${esc(c.name)}${d.rev ? '(역방향)' : ''}"><img src="tarot/${c.id}.webp" alt="" width="150" height="258" loading="lazy" decoding="async" onerror="this.parentNode.classList.add('fb')">
+    <div class="tfb" aria-hidden="true"><span class="tn">${c.numeral}</span>${I(c.major ? 'sparkle' : SUIT_IC[c.suit])}<b>${esc(c.name)}</b><span>${esc(c.en)}</span></div></figure>`;
+}
+const tarotOf = () => { db.tarot = db.tarot || {}; db.tarot.daily = db.tarot.daily || {}; db.tarot.history = db.tarot.history || []; db.tarot.log = db.tarot.log || []; return db.tarot; };
+const myHist = () => tarotOf().history.map((h, i) => ({ h, i })).filter(x => !x.h.pid || x.h.pid === me().id);
+const rngCrypto = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 4294967296; };
+const tMethod = () => T.METHODS[db.settings.tarotMethod] || T.METHODS.rws;
+const ROLE_LINE = '사주는 큰 흐름(대운·세운), 타로는 지금 이 질문의 가까운 흐름이에요.';
+const MIRROR = '<p class="small mirror">타로는 마음을 비춰 보는 거울이에요 — 결정은 직접.</p>';
+const creditNote = () => tMethod().credit ? `<p class="small credit">${esc(tMethod().credit)}</p>` : '';
+function tarotCard(c, p) {
+  const ymd = S.dayView(c, today(), { sect: db.settings.sect }).ymd, got = ((tarotOf().daily[p.id] || {})[ymd]);
+  if (!got) return `<section class="card tarot-today" id="tarotCard"><div class="ch"><h2>${I('sparkle')}오늘의 카드</h2><span class="sub">하루에 한 장 · 뽑으면 오늘은 바뀌지 않아요</span></div>
+    <div class="tdraw undrawn"><div class="tback" aria-hidden="true">${I('sparkle')}</div><div class="tmain"><p class="lead">마음속으로 오늘 하루를 떠올리고 한 장을 뽑아 보세요. ${ROLE_LINE}</p></div>
+      <div class="tmore"><p class="small gap-s">질문이 있으면 카드 여러 장으로도 볼 수 있어요: ${Object.values(T.SPREADS).filter(s => s.advice).map(s => s.name).join(' · ')}</p>
+      <div class="btns"><button class="btn pri" data-act="tdraw">${I('sparkle')}카드 한 장 뽑기</button><button class="btn" data-act="tthree">질문으로 카드 보기</button></div>${MIRROR}${creditNote()}</div></div></section>`;
+  const cardD = tMethod().reversed ? got : { ...got, rev: false };     // 정회도 방식이면 예전에 뽑은 역방향도 바로 세워 보여 줌
+  const f = T.face(cardD), dv = S.dayView(c, today(), { sect: db.settings.sect }), cls = S.now(c, today(), opts()).cls;
+  const pol = tMethod().polar ? T.polarity(got.id, 0) : null;
+  return `<section class="card tarot-today" id="tarotCard"><div class="ch"><h2>${I('sparkle')}오늘의 카드</h2><span class="sub">${mdOf(ymd)} · 오늘 뽑은 카드</span></div>
+    <div class="tdraw">${cardFace(cardD)}<div class="tmain"><h3>${esc(f.name)}${cardD.rev ? ' <span class="sub">역방향</span>' : ''}</h3><p class="tk">${esc(f.m.k)}</p><p class="lead">${esc(pol ? pol.t : f.m.t)}</p></div>
+      <div class="tmore"><p class="note">${I('compass')}<span><b>사주와 함께 보기</b> <span class="tag sm">앱이 더한 연결</span> ${esc(T.withSaju(cardD, { name: p.name, needed: c.analysis.needed, avoid: c.analysis.avoid, day: dv.label, cls }))}</span></p>
+      <div class="btns gap-t"><button class="btn" data-act="tthree">질문으로 카드 보기</button></div>${MIRROR}${creditNote()}</div></div></section>`;
+}
+function drawDaily() {
+  const p = me(), c = chartOf(p), ymd = S.dayView(c, today(), { sect: db.settings.sect }).ymd, t = tarotOf();
+  const mine = t.daily[p.id] = t.daily[p.id] || {};
+  if (mine[ymd]) return;                                   // 같은 날 다시 뽑지 않음
+  mine[ymd] = T.draw(1, { rng: rngCrypto, reversed: tMethod().reversed })[0];
+  for (const k of Object.keys(mine).sort().slice(0, -30)) delete mine[k];   // 프로필마다 최근 30일만
+  save();
+  const el = $('#tarotCard'); if (el) el.outerHTML = tarotCard(c, p);
+}
+const SAFE = {
+  crisis: `<div class="banner crisis" role="alert">${I('heart')}<span><b>지금 많이 힘드신가요.</b> 카드 읽기는 여기서 멈출게요. 혼자 견디지 말고 지금 바로 이야기해 주세요.<span class="btns gap-t"><a class="btn" href="tel:109">자살예방상담 109</a><a class="btn" href="tel:15770199">정신건강위기상담 1577-0199</a></span><span class="small">24시간 연결돼요. 위급하면 112·119.</span></span></div>`,
+  money: `<p class="note">${I('wallet')}<span><b>돈의 시점은 보지 않아요.</b> 언제 오를지·언제 살지 같은 질문은 카드로 답하지 않아요. 대신 '흐름 3장'이나 '할까 말까'로 내 돈 습관과 마음가짐을 비춰 보세요.</span></p>`,
+  health: `<p class="note">${I('info')}<span><b>건강은 카드로 보지 않아요.</b> 몸이나 마음이 걱정되면 의사·전문가와 상담하세요.</span></p>`,
+  again: `<p class="note">${I('info')}<span>같은 질문은 24시간 안에 한 번만 다시 뽑을 수 있어요. 처음 나온 카드를 먼저 천천히 읽어 봐요.</span></p>`
+};
+function readingHtml(h) {
+  const r = T.reading(h.cards, { spread: h.spread, area: h.area, q: h.q, cls: h.cls, method: h.method, name: me().name, a: h.a, b: h.b });
+  const n = T.SPREADS[r.spread].positions.length, adv = r.advice;
+  return `<div class="reading-t"><h3>${esc(r.title || r.spreadName)}${r.title ? ` <span class="sub">${esc(r.spreadName)}</span>` : ''}</h3>
+    <p class="small">${r.q ? `질문: ${esc(r.q)} · ` : ''}${esc(r.areaName)}${h.a ? ` · A ${esc(h.a)} / B ${esc(h.b)}` : ''}</p>
+    <div class="tthree n${n}">${h.cards.slice(0, n).map((d, i) => `<div>${cardFace(d, 'sm')}<span class="tpos">${esc(r.lines[i].pos)}</span></div>`).join('')}</div>
+    <ul class="rels">${r.lines.map(l => `<li><b>${esc(l.pos)} · ${esc(l.name)}${l.rev ? ' (역)' : ''}${l.pole === 'neg' ? ' · 조심' : ''}</b><span><b class="tk">${esc(l.k)}</b> — ${esc(l.t)}</span></li>`).join('')}</ul>
+    ${r.verdict ? `<p class="lead verdict-l">${esc(r.verdict)}</p>` : ''}
+    ${r.slots ? `<p class="small">${r.slots.extended ? '한 번 더 긴 단위로 봤어요 · ' : ''}슬롯: ${r.slots.units.map((u, i) => `${u}개월 ${esc(r.slots.cards[i].name)}`).join(' · ')}</p>` : ''}
+    ${r.notes.length ? `<ul class="dos">${r.notes.map(t => `<li>${I('sparkle')}<span>${esc(t)}</span></li>`).join('')}</ul>` : ''}
+    ${r.flow ? `<p class="note">${I('compass')}<span>${esc(r.flow)}</span></p>` : ''}
+    ${adv ? `<div class="advice">${cardFace({ id: adv.id, rev: adv.rev }, 'xs')}<p><b>조언 카드</b> ${esc(adv.t)}</p></div>` : ''}
+    ${r.money ? `<p class="small">${esc(r.money)}</p>` : ''}<p class="small">${esc(r.closing)}</p>${r.credit ? `<p class="small credit">${esc(r.credit)}</p>` : ''}</div>`;
+}
+function openTarot(idx, msg) {
+  const t = tarotOf(), h = idx != null ? t.history[idx] : null, mine = myHist();
+  const opt = (v, l, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(l)}</option>`, sp = (h && h.spread) || 'flow3';
+  sheet(`<div class="top"><div><p class="sub">${esc(ROLE_LINE)}</p><h2 id="sheetTitle">질문으로 카드 보기</h2></div>${closeBtn()}</div>
+    <p class="small">타로는 마음을 비춰 보는 거울이에요 — 결정은 직접. 돈 질문에서도 사고팔 종목·시점·금액은 다루지 않고, 건강 질문은 보지 않아요.</p>${creditNote()}
+    <form class="form tform" id="tarotForm" data-sp="${sp}"><div class="two"><label class="f">카드 펼치기<select name="spread">${Object.entries(T.SPREADS).filter(([, s]) => s.advice).map(([k, s]) => opt(k, s.name, sp)).join('')}</select></label>
+      <label class="f">무엇에 대해<select name="area">${['move', 'career', 'money', 'family'].map(k => opt(k, k === 'money' ? T.AREA_NAME.money : area(k), h && h.area)).join('')}${opt('free', '자유 질문', h && h.area)}</select></label></div>
+      <label class="f">질문 (선택)<input type="text" name="q" maxlength="60" placeholder="예: 이번 달 무엇에 집중할까"></label>
+      <div class="two ab-only"><label class="f">A<input type="text" name="a" maxlength="20" placeholder="예: 지금 회사"></label><label class="f">B<input type="text" name="b" maxlength="20" placeholder="예: 새 과정"></label></div>
+      <button class="btn pri" type="submit">${I('sparkle')}카드 뽑기</button></form>
+    <div id="tarotOut">${msg ? SAFE[msg] : h ? readingHtml(h) : ''}</div>
+    <h3>지난 읽기 <span class="sub">최근 10개 · 이 기기에만</span></h3>
+    ${mine.length ? `<ul class="hist">${mine.map(({ h: x, i }) => `<li><button class="btn" data-act="thist" data-i="${i}">${esc(x.at.slice(5, 10).replace('-', '/'))} · ${esc((T.SPREADS[x.spread] || T.SPREADS.flow3).name)} · ${esc(x.area === 'free' ? '자유 질문' : x.area === 'money' ? T.AREA_NAME.money : area(x.area))}</button><button class="btn danger" data-act="tdel" data-i="${i}" aria-label="이 읽기 지우기">${I('trash')}</button></li>`).join('')}</ul>` : '<p class="small">아직 없어요.</p>'}`);
+  const f = $('#tarotForm'); f.spread.addEventListener('change', () => { f.dataset.sp = f.spread.value; });
+  const hd = $('#tarotOut h3, #tarotOut [role="alert"], #tarotOut .note');
+  if (h || msg) { if (hd) { hd.tabIndex = -1; hd.scrollIntoView({ block: 'start' }); hd.focus({ preventScroll: true }); } }
+}
+function submitTarot(f) {
+  const q = f.q.value.trim().slice(0, 60), spread = f.spread.value, ar = f.area.value;
+  const g = T.guard(q + ' ' + f.a.value + ' ' + f.b.value, { spread, area: ar });
+  if (g) return openTarot(null, g);                         // 위기: 중단 + 상담 전화 · 건강: 전문가 안내 · 돈의 시점: 보지 않음
+  const pid = me().id, key = T.qKey(pid, spread, q), t = tarotOf();
+  if (!T.canDraw(t.log, key)) return openTarot(null, 'again');
+  t.log = t.log.filter(x => Date.now() - Date.parse(x.at) < 2 * 864e5); t.log.push({ key, at: new Date().toISOString() });   // 기록 삭제와 따로 두는 뽑기 기록
+  const cards = T.draw(T.cardsNeeded(spread), { rng: rngCrypto, reversed: tMethod().reversed });
+  const h = { at: new Date().toISOString(), pid, key, spread, area: ar, q, a: f.a.value.trim().slice(0, 20), b: f.b.value.trim().slice(0, 20), cards, cls: S.now(chartOf(me()), today(), opts()).cls, method: db.settings.tarotMethod || 'rws' };
+  t.history.unshift(h);
+  const keep = new Set(t.history.filter(x => (x.pid || pid) === pid).slice(0, 10));   // 프로필마다 최근 10개
+  t.history = t.history.filter(x => (x.pid || pid) !== pid || keep.has(x)); save();
+  openTarot(0);
+}
+/** 숫자로 뽑는 카드(수비학): 타고난 카드 · 올해의 카드. 사주와 섞지 않고 옆에 나란히 */
+function numerCard(c, p) {
+  const Y = kst(today()).y, soul = T.soulCard(c.solar), yc = T.yearCard(c.solar, Y), v = S.now(c, today(), opts());
+  const act = yc.up.t.split(/(?<=요\.)\s*/).filter(Boolean).pop();
+  return `<section class="card numer"><div class="ch"><h2>${I('sparkle')}숫자로 보는 카드</h2><span class="sub">수비학 · 재미로 · 양력 생일로 계산해요</span></div>
+    <div class="numer-g">
+      <div class="nc">${cardFace({ id: soul.id })}<div><p class="small">타고난 카드 · 생년월일 숫자를 한 자리가 될 때까지 더해요</p><h3>${soul.numeral} ${esc(soul.name)}</h3><p class="tk">${esc(soul.up.k)}</p><p class="lead">${esc(soul.up.t)}</p></div></div>
+      <div class="nc">${cardFace({ id: yc.id })}<div><p class="small">${Y}년 올해의 카드 · 생일(월·일) + 올해 숫자</p><h3>${yc.numeral} ${esc(yc.name)}</h3>
+        <ul class="dos"><li class="do">${I('check')}<span><b>좋은 점</b> ${esc(yc.up.k)}</span></li><li class="dont">${I('info')}<span><b>주의할 점</b> ${esc(yc.rev.t)}</span></li><li>${I('sparkle')}<span><b>올해의 조언</b> ${esc(act)}</span></li></ul>
+        <p class="small">사주로 본 올해: ${v.Y.gz}년 · ${S.CLASSES[S.yearView(c, v.year).cls].name} (해석은 섞지 않아요)</p></div></div>
+    </div></section>`;
+}
+
+// ── 이야기로 읽기 (원국 → 7장, 규칙 문장) ──
+const STEM_IMG = { 甲: '큰 나무', 乙: '풀과 덩굴', 丙: '태양', 丁: '등불', 戊: '큰 산', 己: '논밭', 庚: '바위와 쇠', 辛: '보석', 壬: '큰 물', 癸: '비와 이슬' };
+const STEM_TRAIT = { 甲: '곧게 자라며 앞장서는', 乙: '유연하게 감아 오르는', 丙: '밝게 비추며 눈에 띄는', 丁: '가까운 곳을 따뜻하게 밝히는', 戊: '묵직하게 버티는', 己: '사람과 일을 길러 내는', 庚: '단단하게 결단하는', 辛: '섬세하게 다듬는', 壬: '넓게 흐르며 담아내는', 癸: '조용히 스며드는' };
+const NUMK = ['', '하나', '둘', '셋', '넷'];
+const SEASON_W = ['한겨울', '늦겨울', '봄 문턱', '한봄', '늦봄', '여름 문턱', '한여름', '늦여름', '가을 문턱', '한가을', '늦가을', '겨울 문턱'];
+const STAGE_OF_GOD = { 편재: '돈·물건이 흐르는 판 — 물류·유통·기획처럼 큰 흐름을 다루는 일과 잘 맞아요', 정재: '꾸준히 쌓아 가는 살림의 판 — 성실하게 모으고 관리하는 일과 잘 맞아요', 편관: '책임과 압박을 견디며 크는 판 — 힘든 자리를 맡아 이겨 내며 자라요', 정관: '규칙과 조직 안에서 자리 잡는 판 — 믿음을 쌓아 올라가는 일과 잘 맞아요', 식신: '손재주·실력으로 먹고사는 판 — 기술을 꾸준히 갈고닦는 일과 잘 맞아요', 상관: '말·재주로 틀을 깨는 판 — 새 방식을 내놓는 일과 잘 맞아요', 편인: '남다른 기술·아이디어를 익히는 판 — 특수한 전문성과 잘 맞아요', 정인: '배움과 문서로 서는 판 — 공부·자격으로 길을 여는 일과 잘 맞아요', 비견: '스스로 서는 판 — 내 이름을 걸고 하는 일과 잘 맞아요', 겁재: '경쟁 속에서 나눠 갖는 판 — 함께 겨루며 크는 일과 잘 맞아요' };
+const SHORTG = { 비견: '자기 힘', 겁재: '경쟁', 식신: '실력', 상관: '재주', 편재: '큰돈', 정재: '꾸준한 돈', 편관: '책임·자격', 정관: '자리', 편인: '아이디어', 정인: '배움' };
+const ROOT_OF = { 인성: '배움·기술', 식상: '재주·표현', 재성: '돈·살림 감각', 관성: '책임감·규칙', 비겁: '자기 힘·독립심' };
+const SPOUSE_OF = { 식상: '표현과 열정이 관계의 중심이에요.', 재성: '현실 감각과 살림이 관계의 중심이에요.', 관성: '책임과 약속이 관계의 중심이에요.', 인성: '보살핌과 배움이 관계의 중심이에요.', 비겁: '친구 같은 동지 관계를 원해요.' };
+const EL_JOB = ['자라게 하고 가르치는 일', '빛·열·전기', '땅·중개·관리', '쇠·기계·정밀', '물·흐름·유통'];
+const PATH_OF = { 관성: '자격·면허를 더하는', 식상: '손기술을 쌓는', 재성: '사업으로 넓히는', 인성: '가르치고 전하는', 비겁: '독립해서 하는' };
+const INWARD = ['묘', '절', '태', '양', '병', '사'], OUTWARD = ['건록', '제왕', '관대'];
+function storyChapters(c, p) {
+  const A = c.analysis, ps = c.pillars, d = ps[2][0], nm = p.name, img = STEM_IMG[d];
+  const stems = ps.filter(Boolean).map(x => x[0]), same = stems.filter(x => x === d).length, bigyeop = A.gods.filter((g, i) => g && i !== 2 && g.stem.group === '비겁').length;
+  const ch = [];
+  // ① 일간
+  let t1 = `${josa(nm, '은/는')} 일간(중심 글자)이 ${d}, ${josa(img, '이에요/예요')}. ${STEM_TRAIT[d]} 기운이에요.`;
+  if (same >= 2) t1 += ` 천간에 ${josa(d, '이/가')} ${NUMK[same] || same}이라 "${josa(img, '이/가')} ${NUMK[same] || same}"인 사주예요. 같은 기운(비견)이 많으면 어디서나 존재감이 크고 경쟁심도 강해요. 다만 한쪽으로 몰아가기 쉬우니(몰빵 경향), 나눠 거는 습관이 그림자를 덜어 줘요.`;
+  else if (bigyeop) t1 += ' 비슷한 기운(겁재)이 곁에 있어 경쟁 속에서 힘이 나는 편이에요. 다만 나눠 갖는 일이 생기기 쉬우니 돈 약속은 분명히 해요.';
+  else t1 += ' 천간에 같은 기운이 없어 혼자 밀기보다 사람·환경과 맞물려 움직이는 편이에요.';
+  ch.push(['① 중심 글자', t1]);
+  // ② 계절 + 월지 십성
+  const mb = ps[1][1], mg = A.gods[1].branch;
+  const [stg, stgHow] = STAGE_OF_GOD[mg.name].split(' — ');
+  ch.push(['② 태어난 계절과 무대', `${SEASON_W[S.bi(mb)]}(월지 ${mb})에 태어났고, 그 자리에 ${josa(godTxt(mg), '이/가')} 있어요. 그래서 삶의 무대는 ${josa(stg, '이에요/예요')}. ${stgHow}.`]);
+  // ③ 움직임
+  const ym = ps.map((x, i) => x && '寅申巳亥'.includes(x[1]) ? `${S.PALACE[i]}지 ${x[1]}` : null).filter(Boolean);
+  const chung = uniq(A.natalRel.filter(r => r.type === '충').map(r => r.name.split(' ')[0]));
+  let t3 = ym.length >= 2 ? `원국에 움직임의 글자(寅·申·巳·亥, 역마 성분)가 ${NUMK[ym.length] || ym.length}이에요 — ${ym.join(', ')}.` : ym.length ? `움직임의 글자(역마 성분)는 ${ym[0]} 하나예요.` : '원국에 움직임의 글자(역마 성분)가 없어 한곳에 뿌리내리며 크는 편이에요.';
+  if (chung.length) t3 += ` 게다가 ${chung.join('·')} 부딪힘(충)이 있어, 한자리에 머물기보다 부딪히며 자리를 옮기는 힘이 커요.${ym.length >= 2 ? ' 먼 이동·해외와 인연이 깊은 구조예요.' : ''}`;
+  const yy = nextYears(gz => gz[1] === A.yeokma, 1);
+  if (yy && (ym.length >= 2 || chung.length)) t3 += ` ${yy.split(' ')[0]}년 ${yy.split(' ')[1]}에는 ${josa(A.yeokma, '이/가')} 다시 들어와 이동의 해가 돼요.`;
+  ch.push(['③ 움직임', t3]);
+  // ④ 뿌리와 배우자 자리
+  const yg = A.gods[0].branch, dg = A.gods[2].branch, st0 = A.stages[0], st2 = A.stages[2];
+  let t4 = `띠 자리(년지 ${ps[0][1]})는 ${ROOT_OF[yg.group]}의 뿌리예요 — ${josa(godTxt(yg), '이/가')} ${stageTxt(st0)}에 있어요.`;
+  t4 += ` 배우자 자리(일지 ${ps[2][1]})에는 ${josa(godTxt(dg), '이/가')} ${stageTxt(st2)}에 있어요. ${SPOUSE_OF[dg.group]}`;
+  if (INWARD.includes(st2)) t4 += ' 마음을 속에 저장해 두는 편이라, 속마음을 말로 꺼내는 연습이 관계를 편하게 해요.';
+  else if (OUTWARD.includes(st2)) t4 += ' 마음이 겉으로 바로 드러나는 편이라, 한 박자 쉬고 말하면 좋아요.';
+  ch.push(['④ 뿌리와 배우자 자리', t4]);
+  // ⑤ 시주
+  if (ps[3]) {
+    const hs = A.gods[3].stem, hb = A.gods[3].branch, e = S.stemEl(S.si(d));
+    ch.push(['⑤ 말년의 과제', `시주(${ps[3]})는 뒤로 갈수록 커지는 숙제예요. ${godTxt(hs)} 위에 ${josa(godTxt(hb), '이/가')} 있어, "${josa(SHORTG[hs.name], '을/를')} ${josa(SHORTG[hb.name], '으로/로')} 바꾸는 것"이 과제예요. 일간의 ${josa(elName(e), '은/는')} ${EL_JOB[e]}의 기운이라, 예를 들면 ${josa(EL_JOB[e], '을/를')} 다루는 일에 ${PATH_OF[hb.group]} 길이 잘 맞아요.`]);
+  } else ch.push(['⑤ 말년의 과제', '태어난 시간을 몰라 말년의 과제(시주)는 비워 둘게요.']);
+  // ⑥ 필요한 기운 + 상대
+  const need = A.needed.map(elName).join('·');
+  let t6 = need ? `필요한 기운은 ${josa(need, '이에요/예요')}. ${(A.reasons.find(r => r.kind === 'need') || {}).why || ''}` : '크게 치우친 기운이 없어 따로 꼭 필요한 기운은 적어요.';
+  const pt = partner();
+  if (pt && pt !== p && A.needed.length) {
+    const pc = chartOf(pt);
+    if (pc) {
+      const has = A.needed.filter(e => pc.analysis.count[e] > 0), m = S.match(c, pc);
+      t6 += has.length ? ` ${pt.name}의 원국에는 ${has.map(e => `${elName(e)} ${pc.analysis.count[e]}개`).join(', ')}가 있어, 필요한 기운을 곁에서 채워 줘요.` : ` ${pt.name}의 원국에는 이 기운이 적어, 다른 사람·환경으로 채우면 좋아요.`;
+      if (m.gangHwi) t6 += ' 두 일간은 丙(해)과 壬(큰 물) — 강물 위에 햇빛이 비치는 그림(강휘상영)이에요.';
+    }
+  }
+  ch.push(['⑥ 필요한 기운', t6.trim()]);
+  // ⑦ 대운 이야기 + 앞으로 몇 해
+  const v = S.now(c, today(), opts()), L = c.daeun.list, i = v.daeun ? L.indexOf(v.daeun) : -1;
+  const dPh = dd => { const D = S.component(c, dd.gz, 'daeun'), [a, b] = D.gods, [ea, eb] = S.gzEls(dd.gz); return `${SHORTG[a.name]}(${S.EL[ea]})+${SHORTG[b.name]}(${S.EL[eb]})`; };
+  const parts = [];
+  if (i > 0) parts.push(`${L[i - 1].startAge}세부터의 ${L[i - 1].gz} 대운은 ${dPh(L[i - 1])}의 10년이었어요.`);
+  if (i >= 0) parts.push(`지금 ${L[i].startYear}–${L[i].endYear} ${L[i].gz} 대운은 ${josa(dPh(L[i]), '이/가')} 들어오는 10년이에요(10년 흐름 ${TEN_W(v.D.total)}).`);
+  if (L[i + 1]) parts.push(`${L[i + 1].startYear}년부터는 ${L[i + 1].gz}: ${dPh(L[i + 1])}.`);
+  const runs = [];
+  for (let Y = v.year; Y <= v.year + 6; Y++) { const y = S.yearView(c, Y), av = y.Y.notes.find(n => n.k === 'avoid'), why = av ? av.t.replace('넘치는 ', '').replace(/\(.*\)/, '') + ' 넘침' : ''; const r = runs[runs.length - 1]; if (r && r.cls === y.cls && r.why === why) r.to = Y; else runs.push({ from: Y, to: Y, cls: y.cls, why }); }
+  parts.push('앞으로는 ' + runs.slice(0, 3).map(r => `${r.from === r.to ? r.from : `${r.from}–${String(r.to).slice(2)}`}년 ${S.CLASSES[r.cls].name}${r.why ? `(${r.why})` : ''}`).join(' → ') + '.');
+  ch.push(['⑦ 10년 회사들과 앞으로', parts.join(' ')]);
+  const push = runs.find(r => r.cls === 'push');
+  const sum = `한 줄로 — ${same >= 2 ? `${josa(img, '이/가')} ${NUMK[same] || same}인` : `${img}인`} ${nm}, ${STAGE_OF_GOD[mg.name].split(' — ')[0]}에서 ${ym.length >= 2 || chung.length ? '움직이며' : '뿌리내리며'} 크고, ${push ? (push.from === v.year ? '지금이 밀고 갈 때예요.' : `${push.from}년부터 밀고 갈 때예요.`) : `지금은 ${S.CLASSES[v.cls].name}예요.`}`;
+  return { ch, sum };
+}
+function storyCard(c, p) {
+  const { ch, sum } = storyChapters(c, p);
+  return `<section class="card story"><div class="ch"><h2>${I('book')}이야기로 읽기</h2><span class="sub">원국을 일곱 장면으로 · 용어는 괄호 안</span></div>
+    <p class="sum">${esc(sum)}</p>
+    <h3>${ch[0][0]}</h3><p class="lead">${esc(ch[0][1])}</p>
+    <details class="more"><summary>이어서 읽기 (${ch.length - 1}장 더)</summary>${ch.slice(1).map(([h, t]) => `<h3>${h}</h3><p class="lead">${esc(t)}</p>`).join('')}</details></section>`;
+}
+
 // ── 페이지: 내 사주 ──
 function pillarCells(c, compact) {
   const A = c.analysis, order = [3, 2, 1, 0];
@@ -538,6 +789,8 @@ function pageChart() {
   const gods = uniq(A.gods.filter(Boolean).flatMap(g => [g.stem.name, g.branch.name]).filter(n => GOD_GL[n]));
   const tie = cands[0] && cands[0].tie;
   return `<div class="head"><h1>내 사주</h1><p>${esc(p.name)} · ${S.ANIMAL[S.bi(yb)]}띠 · ${p.gender === 'F' ? '여' : '남'}</p></div>
+  ${storyCard(c, p)}
+  ${T ? numerCard(c, p) : ''}
   <div class="grid g2">
     <section class="card"><div class="ch"><h2>${I('scroll')}원국 여덟 글자</h2>${seg}</div>
       ${pillarCells(c)}
@@ -686,6 +939,7 @@ function pageSettings() {
         <label class="opt"><span>밤 11시(자시) 날짜</span><select data-set="sect"><option value="1"${+st.sect !== 2 ? ' selected' : ''}>23시부터 다음 날 (기본)</option><option value="2"${+st.sect === 2 ? ' selected' : ''}>자정부터 다음 날 (야자시)</option></select></label>
         <label class="opt"><span>화면 테마</span><select data-set="theme"><option value="auto"${st.theme === 'auto' ? ' selected' : ''}>기기 설정 따라가기</option><option value="light"${st.theme === 'light' ? ' selected' : ''}>밝게</option><option value="dark"${st.theme === 'dark' ? ' selected' : ''}>어둡게</option></select></label>
         <label class="chk"><input type="checkbox" data-set="hideMatch"${st.hideMatch ? ' checked' : ''}>궁합·결혼일 탭 숨기기</label>
+        <label class="opt"><span>타로 읽는 방식 <span class="sub">(정회도 방식은 특정인 공식 서비스가 아니에요)</span></span><select data-set="tarotMethod">${Object.entries(T ? T.METHODS : {}).map(([k, m]) => `<option value="${k}"${st.tarotMethod === k ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>
       </div>
     </section>
   </div>
@@ -698,8 +952,13 @@ function pageSettings() {
       <li>${I('check')}<span>스펙에 없는 칸은 이렇게 정했어요: 대운 ≥ +1 이고 세운 0~1 → 지킬 때 · 대운 0~1 → 세운 ≥ +1 밀고 갈 때, 0~1 준비할 때, < 0 지킬 때 · 대운 < 0 이고 세운 0~1 → 준비할 때 · 대운 < 0, 세운 < 0 이어도 3년 안에 좋은 대운이 오면 준비할 때</span></li>
       <li>${I('check')}<span>해(흐름 탭)는 대운 + 그해 세운으로, 달(나침반·12개월)은 대운 + "세운 0.35 : 월운 0.10"으로 분류해요. 그 해의 대운은 실제 교체일 기준으로 그해 한가운데(8월 초)에 걸린 대운이에요.</span></li>
       <li>${I('check')}<span>연주·월주·대운은 절기 시각(베이징 기준 UTC+8)에 맞춘 시각으로, 일주·시주는 태어난 곳의 실제 시각(경도 보정)으로 계산해요. 이름(개명 포함)은 계산에 쓰지 않아요.</span></li>
-      <li>${I('x')}<span>빼 둔 것: 오너 사주로 주가 보기, 건강·식단, 정치, 관상, 생활 미신</span></li>
+      <li>${I('check')}<span>오늘(일진): 그날의 간지를 같은 규칙(오행 ±2, 지지 관계 무게, 십성, 겁살·묘)으로 점수 내 +1 이상 좋은 날, −1 이상 무난한 날, 그 아래 조심할 날. 문장은 이번 달 분류와 함께 읽어요. 잘 맞는 시간대는 원국과의 합 + 필요한 오행 + 그날 일지와의 관계로 골라요.</span></li>
+      <li>${I('check')}<span>오늘(일진)의 날짜는 한국 시계 23:30부터 다음 날로 넘어가요(127.5° 기준 子시 23:30–01:30 관례). 오늘의 카드도 같은 날짜를 써요. 야자시를 고르면 자정에 넘어가요.</span></li>
+      <li>${I('check')}<span>숫자로 보는 카드(수비학, 재미로): 타고난 카드 = 양력 생년월일 숫자를 한 자리가 될 때까지 더한 수(1–9)의 메이저, 올해의 카드 = 생일(월·일) 숫자 + 올해 숫자를 한 자리씩 더해 1–21은 그대로, 22는 바보(0), 23 이상은 다시 더한 수의 메이저예요(정회도 영상 방식). 서양 Greer 방식(월+일+연을 통째로 더함)과는 결과가 다를 수 있어요.</span></li>
+      <li>${I('check')}<span>타로 → 오행: 완드=불(화), 컵=물(수), 소드=칼날·공기(금 — 쇠로 벼린 칼처럼 가르고 결단하는 기운), 펜타클=흙(토). 메이저는 전통 대응을 따라 원소 카드는 그 원소로(공기→금), 별자리 카드는 별자리 원소로, 행성 카드는 동양 이름 그대로(수성→수, 금성→금, 화성·태양→화, 목성→목, 토성→토, 달→수).</span></li>
+      <li>${I('x')}<span>빼 둔 것: 오너 사주로 주가 보기, 건강·식단, 정치, 관상, 생활 미신, 타로로 사고팔 시점 보기</span></li>
     </ul>
+    <p class="small gap-t">타로 그림: Pamela Colman Smith, Rider–Waite–Smith Tarot (1909), 퍼블릭 도메인 · Wikimedia Commons 스캔. 카드 뜻 문장은 이 앱이 직접 쓴 거예요.</p>
     <h3 class="gap-t">달수 방식과 일반 명리의 차이</h3>
     <ul class="cmp">${[
       ['무엇이 필요한가', '계절(조후)과 빠진 오행으로 정해요. 일간의 힘은 따지지 않아요.', '일간의 힘(억부)·조후·격국을 함께 보고 용신을 정해요.'],
@@ -766,6 +1025,16 @@ document.addEventListener('click', e => {
   else if (a === 'daeun') openDaeun(+b.dataset.i);
   else if (a === 'close') $('#sheet').close();
   else if (a === 'hour') { db.settings.hourPick[me().id] = b.dataset.gz; save(); render(); }
+  else if (a === 'day') openDay(b.dataset.d);
+  else if (a === 'tdraw') drawDaily();
+  else if (a === 'tthree') openTarot();
+  else if (a === 'thist') openTarot(+b.dataset.i);
+  else if (a === 'tdel') {
+    const pos = [...document.querySelectorAll('#sheet [data-act="tdel"]')].indexOf(b);
+    tarotOf().history.splice(+b.dataset.i, 1); save(); openTarot();
+    const rows = document.querySelectorAll('#sheet [data-act="thist"]');
+    (rows[Math.min(pos, rows.length - 1)] || $('#tarotForm [name="spread"]')).focus();
+  }
   else if (a === 'add') openForm('');
   else if (a === 'edit') openForm(b.dataset.id);
   else if (a === 'del') { const p = db.profiles.find(x => x.id === b.dataset.id); if (p && confirm(`${josa(p.name, '을/를')} 지울까요?`)) { db.profiles = db.profiles.filter(x => x !== p); save(); render(); } }
@@ -782,7 +1051,7 @@ document.addEventListener('click', e => {
     const link = location.origin + location.pathname + '#import=' + S.encodeImport({ profiles: db.profiles, settings: { wedding: db.settings.wedding, areas: db.settings.areas, focus: db.settings.focus, yearBoundary: db.settings.yearBoundary } });
     (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(() => toast('링크를 복사했어요. 생년월일이 들어 있으니 나만 쓰세요'), () => toast('복사하지 못했어요'));
   }
-  else if (a === 'wipe') { if (confirm('이 기기에 저장된 모든 정보를 지울까요?')) { try { localStorage.removeItem(KEY); } catch (err) { /* noop */ } db = { profiles: [], settings: { ...DEF }, plans: {} }; memo.clear(); render(); toast('모두 지웠어요'); } }
+  else if (a === 'wipe') { if (confirm('이 기기에 저장된 모든 정보를 지울까요?')) { try { localStorage.removeItem(KEY); } catch (err) { /* noop */ } db = { profiles: [], settings: { ...DEF }, plans: {}, tarot: { daily: {}, history: [] } }; memo.clear(); render(); toast('모두 지웠어요'); } }
 });
 document.addEventListener('change', e => {
   const k = e.target.dataset && e.target.dataset.set; if (!k) return;
@@ -799,6 +1068,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('submit', e => {
   e.preventDefault();
+  if (e.target.id === 'tarotForm') return submitTarot(e.target);
   if (e.target.id === 'pform') { if (saveForm(e.target)) { $('#sheet').close(); render(); toast('저장했어요'); } }
   else if (e.target.id === 'pasteForm') {
     const v = $('#pasteIn').value.trim(), i = v.indexOf('#import=');

@@ -1,0 +1,548 @@
+[
+ {
+  "id": "c01",
+  "file": "Cups01.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups01.jpg",
+  "kb": 39.1
+ },
+ {
+  "id": "c02",
+  "file": "Cups02.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups02.jpg",
+  "kb": 37.2
+ },
+ {
+  "id": "c03",
+  "file": "Cups03.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups03.jpg",
+  "kb": 37.8
+ },
+ {
+  "id": "c04",
+  "file": "Cups04.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups04.jpg",
+  "kb": 33.4
+ },
+ {
+  "id": "c05",
+  "file": "Cups05.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups05.jpg",
+  "kb": 23
+ },
+ {
+  "id": "c06",
+  "file": "Cups06.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups06.jpg",
+  "kb": 39.3
+ },
+ {
+  "id": "c07",
+  "file": "Cups07.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups07.jpg",
+  "kb": 38.5
+ },
+ {
+  "id": "c08",
+  "file": "Cups08.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups08.jpg",
+  "kb": 32
+ },
+ {
+  "id": "c09",
+  "file": "Cups09.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups09.jpg",
+  "kb": 37.1
+ },
+ {
+  "id": "c10",
+  "file": "Cups10.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups10.jpg",
+  "kb": 37.7
+ },
+ {
+  "id": "c11",
+  "file": "Cups11.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups11.jpg",
+  "kb": 36.1
+ },
+ {
+  "id": "c12",
+  "file": "Cups12.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups12.jpg",
+  "kb": 37.3
+ },
+ {
+  "id": "c13",
+  "file": "Cups13.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups13.jpg",
+  "kb": 38.6
+ },
+ {
+  "id": "c14",
+  "file": "Cups14.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Cups14.jpg",
+  "kb": 39.6
+ },
+ {
+  "id": "m00",
+  "file": "RWS Tarot 00 Fool.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_00_Fool.jpg",
+  "kb": 35.2
+ },
+ {
+  "id": "m01",
+  "file": "RWS Tarot 01 Magician.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_01_Magician.jpg",
+  "kb": 37.8
+ },
+ {
+  "id": "m02",
+  "file": "RWS Tarot 02 High Priestess.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_02_High_Priestess.jpg",
+  "kb": 39.1
+ },
+ {
+  "id": "m03",
+  "file": "RWS Tarot 03 Empress.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_03_Empress.jpg",
+  "kb": 38.8
+ },
+ {
+  "id": "m04",
+  "file": "RWS Tarot 04 Emperor.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_04_Emperor.jpg",
+  "kb": 37.7
+ },
+ {
+  "id": "m05",
+  "file": "RWS Tarot 05 Hierophant.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_05_Hierophant.jpg",
+  "kb": 39
+ },
+ {
+  "id": "m06",
+  "file": "RWS Tarot 06 Lovers.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_06_Lovers.jpg",
+  "kb": 37.3
+ },
+ {
+  "id": "m07",
+  "file": "RWS Tarot 07 Chariot.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_07_Chariot.jpg",
+  "kb": 37.4
+ },
+ {
+  "id": "m08",
+  "file": "RWS Tarot 08 Strength.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_08_Strength.jpg",
+  "kb": 34.5
+ },
+ {
+  "id": "m09",
+  "file": "RWS Tarot 09 Hermit.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_09_Hermit.jpg",
+  "kb": 26.8
+ },
+ {
+  "id": "m10",
+  "file": "RWS Tarot 10 Wheel of Fortune.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_10_Wheel_of_Fortune.jpg",
+  "kb": 39.6
+ },
+ {
+  "id": "m11",
+  "file": "RWS Tarot 11 Justice.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_11_Justice.jpg",
+  "kb": 37.5
+ },
+ {
+  "id": "m12",
+  "file": "RWS Tarot 12 Hanged Man.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_12_Hanged_Man.jpg",
+  "kb": 37
+ },
+ {
+  "id": "m13",
+  "file": "RWS Tarot 13 Death.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_13_Death.jpg",
+  "kb": 39.4
+ },
+ {
+  "id": "m14",
+  "file": "RWS Tarot 14 Temperance.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_14_Temperance.jpg",
+  "kb": 37.2
+ },
+ {
+  "id": "m15",
+  "file": "RWS Tarot 15 Devil.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_15_Devil.jpg",
+  "kb": 35.9
+ },
+ {
+  "id": "m16",
+  "file": "RWS Tarot 16 Tower.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_16_Tower.jpg",
+  "kb": 35.5
+ },
+ {
+  "id": "m17",
+  "file": "RWS Tarot 17 Star.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_17_Star.jpg",
+  "kb": 38.2
+ },
+ {
+  "id": "m18",
+  "file": "RWS Tarot 18 Moon.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_18_Moon.jpg",
+  "kb": 38.9
+ },
+ {
+  "id": "m19",
+  "file": "RWS Tarot 19 Sun.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_19_Sun.jpg",
+  "kb": 37
+ },
+ {
+  "id": "m20",
+  "file": "RWS Tarot 20 Judgement.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_20_Judgement.jpg",
+  "kb": 39.1
+ },
+ {
+  "id": "m21",
+  "file": "RWS Tarot 21 World.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_21_World.jpg",
+  "kb": 37.8
+ },
+ {
+  "id": "p01",
+  "file": "Pents01.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents01.jpg",
+  "kb": 35.7
+ },
+ {
+  "id": "p02",
+  "file": "Pents02.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents02.jpg",
+  "kb": 34.4
+ },
+ {
+  "id": "p03",
+  "file": "Pents03.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents03.jpg",
+  "kb": 39.5
+ },
+ {
+  "id": "p04",
+  "file": "Pents04.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents04.jpg",
+  "kb": 28.8
+ },
+ {
+  "id": "p05",
+  "file": "Pents05.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents05.jpg",
+  "kb": 39.9
+ },
+ {
+  "id": "p06",
+  "file": "Pents06.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents06.jpg",
+  "kb": 35
+ },
+ {
+  "id": "p07",
+  "file": "Pents07.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents07.jpg",
+  "kb": 39
+ },
+ {
+  "id": "p08",
+  "file": "Pents08.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents08.jpg",
+  "kb": 34.9
+ },
+ {
+  "id": "p09",
+  "file": "Pents09.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents09.jpg",
+  "kb": 37
+ },
+ {
+  "id": "p10",
+  "file": "Pents10.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents10.jpg",
+  "kb": 38.7
+ },
+ {
+  "id": "p11",
+  "file": "Pents11.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents11.jpg",
+  "kb": 32.9
+ },
+ {
+  "id": "p12",
+  "file": "Pents12.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents12.jpg",
+  "kb": 30.2
+ },
+ {
+  "id": "p13",
+  "file": "Pents13.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents13.jpg",
+  "kb": 38.3
+ },
+ {
+  "id": "p14",
+  "file": "Pents14.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Pents14.jpg",
+  "kb": 39.8
+ },
+ {
+  "id": "s01",
+  "file": "Swords01.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords01.jpg",
+  "kb": 33.7
+ },
+ {
+  "id": "s02",
+  "file": "Swords02.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords02.jpg",
+  "kb": 29.5
+ },
+ {
+  "id": "s03",
+  "file": "Swords03.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords03.jpg",
+  "kb": 27.5
+ },
+ {
+  "id": "s04",
+  "file": "Swords04.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords04.jpg",
+  "kb": 35.1
+ },
+ {
+  "id": "s05",
+  "file": "Swords05.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords05.jpg",
+  "kb": 38.4
+ },
+ {
+  "id": "s06",
+  "file": "Swords06.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords06.jpg",
+  "kb": 36
+ },
+ {
+  "id": "s07",
+  "file": "Swords07.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords07.jpg",
+  "kb": 32.5
+ },
+ {
+  "id": "s08",
+  "file": "Swords08.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords08.jpg",
+  "kb": 36.9
+ },
+ {
+  "id": "s09",
+  "file": "Swords09.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords09.jpg",
+  "kb": 34.1
+ },
+ {
+  "id": "s10",
+  "file": "Swords10.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords10.jpg",
+  "kb": 31.6
+ },
+ {
+  "id": "s11",
+  "file": "Swords11.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords11.jpg",
+  "kb": 37.5
+ },
+ {
+  "id": "s12",
+  "file": "Swords12.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords12.jpg",
+  "kb": 37.5
+ },
+ {
+  "id": "s13",
+  "file": "Swords13.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords13.jpg",
+  "kb": 35.3
+ },
+ {
+  "id": "s14",
+  "file": "Swords14.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Swords14.jpg",
+  "kb": 39.6
+ },
+ {
+  "id": "w01",
+  "file": "Wands01.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands01.jpg",
+  "kb": 33.1
+ },
+ {
+  "id": "w02",
+  "file": "Wands02.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands02.jpg",
+  "kb": 33.7
+ },
+ {
+  "id": "w03",
+  "file": "Wands03.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands03.jpg",
+  "kb": 37.1
+ },
+ {
+  "id": "w04",
+  "file": "Wands04.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands04.jpg",
+  "kb": 35.5
+ },
+ {
+  "id": "w05",
+  "file": "Wands05.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands05.jpg",
+  "kb": 36.5
+ },
+ {
+  "id": "w06",
+  "file": "Wands06.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands06.jpg",
+  "kb": 38.1
+ },
+ {
+  "id": "w07",
+  "file": "Wands07.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands07.jpg",
+  "kb": 30.4
+ },
+ {
+  "id": "w08",
+  "file": "Wands08.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands08.jpg",
+  "kb": 31.4
+ },
+ {
+  "id": "w09",
+  "file": "Wands09.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands09.jpg",
+  "kb": 38.1
+ },
+ {
+  "id": "w10",
+  "file": "Wands10.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands10.jpg",
+  "kb": 33
+ },
+ {
+  "id": "w11",
+  "file": "Wands11.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands11.jpg",
+  "kb": 38.3
+ },
+ {
+  "id": "w12",
+  "file": "Wands12.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands12.jpg",
+  "kb": 37.6
+ },
+ {
+  "id": "w13",
+  "file": "Wands13.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands13.jpg",
+  "kb": 38.5
+ },
+ {
+  "id": "w14",
+  "file": "Wands14.jpg",
+  "license": "pd",
+  "page": "https://commons.wikimedia.org/wiki/File:Wands14.jpg",
+  "kb": 37.9
+ }
+]

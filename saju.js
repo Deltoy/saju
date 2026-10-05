@@ -379,6 +379,43 @@
     return { ymd, Yg, Mg, Dg, Y, M, D: Dy, spouseRel, S: s, verdict: s >= 1 ? 'good' : s >= -1 ? 'ok' : 'care' };
   }
 
+  // ── 오늘의 일진 ───────────────────────────────────────────
+  const DAY_LABEL = s => s >= 1 ? 'good' : s >= -1 ? 'ok' : 'care';
+  /** 그 날(한국 시계 날짜)의 일진과 점수. 자시 설정 1(기본)이면 밤 11시 30분부터 다음 날 일진 */
+  function dayView(chart, date, opts = {}) {
+    // 자시: 한국 시계 23:30부터 다음 날 일진 (한국 관례, 127.5° 기준 子시 23:30–01:30). 야자시(sect 2)는 자정에 바뀜
+    const t = new Date(date.getTime() + 9 * 3600e3), roll = (opts.sect || 1) === 1 && t.getUTCHours() * 60 + t.getUTCMinutes() >= 23 * 60 + 30;
+    const k = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + (roll ? 1 : 0)));
+    const y = k.getUTCFullYear(), m = k.getUTCMonth() + 1, d = k.getUTCDate();
+    const gz = Solar.fromYmd(y, m, d).getLunar().getDayInGanZhi(), D = component(chart, gz, 'day');
+    return { ymd: y + '-' + pad(m) + '-' + pad(d), gz, D, label: DAY_LABEL(D.total), hours: hourBlocks(chart, gz) };
+  }
+  /** 잘 맞는 2시간 블록: 원국 지지와 합(무게 적용) + 오늘 일지와의 관계(×0.5) + 필요한 오행, 오늘 일지와 충인 시는 뺌. 시각은 한국 관례(子시 23:30–01:30) */
+  function hourBlocks(chart, dayGz, n = 2) {
+    const A = chart.analysis, brs = chart.pillars.map(p => p && p[1]), out = [];
+    for (let i = 0; i < 12; i++) {
+      const hb = BRANCHES[i];
+      if (Math.abs(i - bi(dayGz[1])) === 6) continue;
+      let sc = 0, why = null;
+      brs.forEach((nb, j) => {
+        if (!nb) return;
+        const rs = branchRelations(hb, nb, brs.filter((x, q) => x && q !== j)).filter(r => r.type !== '같은 글자');
+        if (!rs.length) return;
+        sc += pairScore(rs) * ANCHOR_W[j];
+        const g = rs.filter(isGood).sort((a, b) => b.s - a.s)[0];
+        if (g && pairScore(rs) > 0 && !why) why = g;
+      });
+      const dr = branchRelations(hb, dayGz[1]).filter(r => r.type !== '같은 글자');
+      if (dr.length) sc += pairScore(dr) * 0.5;                     // 오늘 일지와의 관계도 반영 → 날마다 조금씩 달라짐
+      const e = BR_EL[i];
+      if (A.needed.includes(e)) sc += 1;
+      if (A.avoid.includes(e)) sc -= 1;
+      const st = (i * 120 - 30 + 1440) % 1440, en = (st + 120) % 1440;
+      if (sc > 0) out.push({ branch: hb, score: round(sc), from: fromMin(st), to: fromMin(en), rel: why, need: A.needed.includes(e) ? e : null });
+    }
+    return out.sort((a, b) => b.score - a.score).slice(0, n);
+  }
+
   // ── 가져오기 링크 ─────────────────────────────────────────
   const b64e = s => (typeof Buffer !== 'undefined' ? Buffer.from(s, 'utf8').toString('base64') : btoa(String.fromCharCode(...new TextEncoder().encode(s)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const b64d = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); return typeof Buffer !== 'undefined' ? Buffer.from(s, 'base64').toString('utf8') : new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0))); };
@@ -418,7 +455,7 @@
   return {
     STEMS, BRANCHES, STEM_KO, BRANCH_KO, EL, EL_HANJA, BR_EL, ANIMAL, PALACE, PALACE_AREA, CLASSES, CITIES, W,
     ko, gzEls, stemEl, si, bi, yearGz, tenGod, godOfStem, godOfBranch, stage12, branchRelations, pairScore, samjaeBranches,
-    correction, computeChart, analyze, component, classify, baseClass, score, nextSeunStart, daeunAt, daeunOnDate, yearView, now, months, match, checkDate,
+    correction, computeChart, analyze, component, classify, baseClass, score, nextSeunStart, dayView, hourBlocks, DAY_LABEL, daeunAt, daeunOnDate, yearView, now, months, match, checkDate,
     encodeImport, decodeImport
   };
 });
