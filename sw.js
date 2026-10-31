@@ -1,5 +1,5 @@
 // Offline cache: app shell (incl. bundled lunar.js) + fonts. Tarot images are cached as they are first shown. Bump V on every release.
-const V = 'saju-v6';
+const V = 'saju-v7';
 const SHELL = ['./', 'index.html', 'app.css', 'app.js', 'saju.js', 'tarot.js', 'gloss.js', 'lunar.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png',
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'];
 // 하나씩 캐시: 한 파일이 실패해도 나머지는 남음
