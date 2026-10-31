@@ -165,6 +165,14 @@ function renderNav(cur) {
     TABS.filter(([k]) => k !== 'match' || (!db.settings.hideMatch && partner())).map(([k, l, ic]) => `<a href="#/${k}"${k === cur ? ' aria-current="page"' : ''}>${I(ic)}<span>${l}</span></a>`).join('') +
     `<p class="side-note">명리는 흐름을 보는 참고예요 — 결정은 직접. 투자 판단의 근거로 쓰지 마세요.</p>`;
 }
+// 1031 MJ "프로필을 바로바로 바꿀 수가 없어" → 맨 위 이름 버튼으로 바로 바꾸기
+function topBar(t) {
+  if (t === 'settings' || !db.profiles.length) return '';
+  const cur = me();
+  const who = db.profiles.length > 1 ? `<div class="whobar" role="group" aria-label="누구 사주를 볼까요"><span class="wl">보는 사람</span>${db.profiles.map(p => `<button data-act="who" data-id="${esc(p.id)}" aria-pressed="${p === cur}">${esc(p.name)}</button>`).join('')}</div>` : '';
+  return who;
+}
+const hintHtml = t => db.settings.termSeen ? '' : `<p class="hint">${I('book')}<span>점선 밑줄이 있는 말을 누르면 쉬운 뜻이 나와요${t === 'chart' ? '' : ' · <a href="#/chart#gloss">어려운 말 사전</a>'}</span></p>`;
 function render() {
   applyTheme();
   if (!window.Solar || !window.Lunar || !S) {
@@ -174,8 +182,11 @@ function render() {
   const t = db.profiles.length ? route() : (route() === 'settings' ? 'settings' : 'home');
   renderNav(t);
   FLOW = null;
-  $('#main').innerHTML = PAGES[t]();
+  $('#main').innerHTML = topBar(t) + PAGES[t]();
+  const hd = $('#main .head'); if (hd && t !== 'settings') hd.insertAdjacentHTML('afterend', hintHtml(t));
   drawCharts();
+  linkTerms($('#main'));
+  const on = $('.whobar [aria-pressed="true"]'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   document.title = (TABS.find(x => x[0] === t) || TABS[0])[1] + ' · 사주 나침반';
   const anchor = location.hash.split('#')[2];
   if (anchor && document.getElementById(anchor)) requestAnimationFrame(() => document.getElementById(anchor).scrollIntoView({ block: 'start' }));
@@ -377,7 +388,7 @@ function pageHome() {
   if (v.attack) tags.push(`<span class="tag">${I('target')}공격 타이밍: 부딪쳐도 되는 해, 결과는 내년</span>`);
   if (Dd && Dd.halfPeak) tags.push('<span class="tag">반쪽 전성기</span>');
   if (v.Y.samjae) tags.push('<span class="tag bad">삼재 해</span>');
-  const plans = db.plans[planKey(v)] || {};
+  const plans = plansOf(v, p);
   return `<div class="head"><h1>${esc(p.name)}의 나침반</h1><p>${fmtDate(today())} · ${gzKo(M.gz)}월(${md(v.monthStart)}~${md(new Date(v.monthEnd.getTime() - 864e5))})</p></div>
   <section class="card verdict k-${v.cls}" aria-label="이번 달 흐름">
     <div class="compass">${dial(v.cls)}
@@ -404,7 +415,8 @@ function pageHome() {
   </details>`;
 }
 const PLAN_EX = { move: '비자 서류 목록 만들기', career: '모의고사 2회 풀기', money: '고정비 3개 줄이기', family: '예식장 계약서 확인' };
-const planKey = v => { const k = kst(v.monthStart); return `${k.y}-${String(k.m).padStart(2, '0')}`; };
+const planKey = (v, p) => { const k = kst(v.monthStart), m = `${k.y}-${String(k.m).padStart(2, '0')}`; return p ? p.id + '|' + m : m; };
+const plansOf = (v, p) => db.plans[planKey(v, p)] || (p.role === 'me' && db.plans[planKey(v)]) || {};
 function monthsSentence(ms, v) {
   const runs = [];
   for (const m of ms) { const l = runs[runs.length - 1]; if (l && l.cls === m.cls) l.n++; else runs.push({ cls: m.cls, n: 1, start: m.start }); }
@@ -529,7 +541,7 @@ function openDaeun(i) {
     ${calcBox([...partsRows(D), ['대운 합계', sgn(D.total)]])}`);
 }
 const closeBtn = () => `<button class="x" data-act="close" aria-label="닫기">${I('x')}</button>`;
-function sheet(html) { const d = $('#sheet'); d.innerHTML = `<div class="sh">${html}</div>`; if (!d.open) d.showModal(); }
+function sheet(html, skip) { const d = $('#sheet'); d.innerHTML = `<div class="sh">${html}</div>`; linkTerms($('#sheet .sh'), skip); if (!d.open) d.showModal(); d.scrollTop = 0; }
 
 // ── 오늘의 일진 ──
 const DAY_NAME = { good: '좋은 날', ok: '무난한 날', care: '조심할 날' };
@@ -741,7 +753,7 @@ function storyChapters(c, p) {
     if (pc) {
       const has = A.needed.filter(e => pc.analysis.count[e] > 0), m = S.match(c, pc);
       t6 += has.length ? ` ${pt.name}의 원국에는 ${has.map(e => `${elName(e)} ${pc.analysis.count[e]}개`).join(', ')}가 있어, 필요한 기운을 곁에서 채워 줘요.` : ` ${pt.name}의 원국에는 이 기운이 적어, 다른 사람·환경으로 채우면 좋아요.`;
-      if (m.gangHwi) t6 += ' 두 일간은 丙(해)과 壬(큰 물) — 강물 위에 햇빛이 비치는 그림(강휘상영)이에요.';
+      if (m.gangHwi) t6 += ' 두 일간은 丙(태양)과 壬(큰 물) — 강물 위에 햇빛이 비치는 그림(강휘상영)이에요.';
     }
   }
   ch.push(['⑥ 필요한 기운', t6.trim()]);
@@ -776,8 +788,8 @@ function pillarCells(c, compact) {
     const p = c.pillars[i];
     if (!p) return `<div class="pillar empty"><span class="pl">${S.PALACE[i]}주</span><span class="god">시간 모름</span><span class="hz">?</span><span class="hz">?</span><span class="st">3주로 봐요</span></div>`;
     const g = A.gods[i];
-    return `<div class="pillar${i === 2 ? ' me' : ''}"><span class="pl">${S.PALACE[i]}주${i === 2 ? ' · 나' : ''}</span><span class="god">${g.stem.name}</span>${hz(p[0])}<span class="k">${S.STEM_KO[S.si(p[0])]} · ${S.EL[S.stemEl(S.si(p[0]))]}</span>${hz(p[1])}<span class="k">${S.BRANCH_KO[S.bi(p[1])]} · ${S.EL[S.BR_EL[S.bi(p[1])]]}</span><span class="god">${g.branch.name}</span><span class="st">${A.stages[i]}</span></div>`;
-  }).join('')}</div>`;
+    return `<button type="button" class="pillar${i === 2 ? ' me' : ''}" data-act="cell" data-i="${i}" aria-label="${S.PALACE[i]}주 ${p} 뜻 보기"><span class="pl">${S.PALACE[i]}주${i === 2 ? ' · 나' : ''}</span><span class="god">${g.stem.name}</span>${hz(p[0])}<span class="k">${S.STEM_KO[S.si(p[0])]} · ${S.EL[S.stemEl(S.si(p[0]))]}</span>${hz(p[1])}<span class="k">${S.BRANCH_KO[S.bi(p[1])]} · ${S.EL[S.BR_EL[S.bi(p[1])]]}</span><span class="god">${g.branch.name}</span><span class="st">${A.stages[i]}</span></button>`;
+  }).join('')}</div><p class="small gap-s">${I('info')} 칸을 누르면 그 글자의 뜻을 자세히 볼 수 있어요</p>`;
 }
 function pageChart() {
   const p = me(); if (!p) return emptyHome();
@@ -788,7 +800,7 @@ function pageChart() {
   const yb = c.pillars[0][1];
   const gods = uniq(A.gods.filter(Boolean).flatMap(g => [g.stem.name, g.branch.name]).filter(n => GOD_GL[n]));
   const tie = cands[0] && cands[0].tie;
-  return `<div class="head"><h1>내 사주</h1><p>${esc(p.name)} · ${S.ANIMAL[S.bi(yb)]}띠 · ${p.gender === 'F' ? '여' : '남'}</p></div>
+  return `<div class="head"><h1>${esc(p.name)}의 사주</h1><p>${S.ANIMAL[S.bi(yb)]}띠 · ${p.gender === 'F' ? '여' : '남'}</p></div>
   ${storyCard(c, p)}
   ${T ? numerCard(c, p) : ''}
   <div class="grid g2">
@@ -818,7 +830,89 @@ function pageChart() {
       ${A.shinsal.map(s => `<li><b>${s.name}</b><span>${esc(s.at)} (${s.base} 기준) · ${esc(s.note)}</span></li>`).join('')}
       <li><b>삼재 해</b><span>${A.samjae.join('·')}년 (띠 기준). 이 방식은 해마다 −1점만 반영해요.</span></li></ul>
     </section>
-  </div>`;
+  </div>
+  ${glossCard()}`;
+}
+
+// ── 어려운 말 풀이 (1031 MJ "좀 더 디테일하게 뜻풀이, 무슨 말인지 잘 모르겠어") — 글 속 용어에 점선 밑줄, 누르면 쉬운 뜻 ──
+const NOLINK = 'button, a, select, option, input, textarea, label, svg, h1, h2, .tag, .seg, .whobar, .hint, .bar, .mlist, .pills';
+let TERM_RE;
+function linkTerms(root, skip) {
+  if (!window.Gloss || !root) return;
+  TERM_RE = TERM_RE || new RegExp(Gloss.LINK.slice().sort((a, b) => b.length - a.length).map(w => w.replace(/[()]/g, '\\$&')).join('|') + `|\\((?:${Gloss.ONE.join('|')})\\)`, 'g');
+  const re = TERM_RE, scopes = root.matches('.sh') ? [root, ...root.querySelectorAll('.card')] : [...root.querySelectorAll('.card')];
+  const done = new Set(skip ? [skip] : []);   // 한 화면에 같은 말은 처음 한 번만 밑줄 (리뷰: 71개는 너무 많음)
+  for (const sc of scopes) {
+    const tw = document.createTreeWalker(sc, NodeFilter.SHOW_TEXT), nodes = [];
+    while (tw.nextNode()) { const n = tw.currentNode, pe = n.parentElement; re.lastIndex = 0; if (!pe.closest(NOLINK) && pe.closest('.card, .sh') === sc && re.test(n.data)) nodes.push(n); }
+    for (const n of nodes) {
+      const s = n.data; let last = 0, m, frag = null; re.lastIndex = 0;
+      while ((m = re.exec(s))) {
+        const one = m[0][0] === '(', w = one ? m[0].slice(1, -1) : m[0], key = Gloss.key(w);
+        if (!key || done.has(key) || (!one && /[가-힣]/.test(s[m.index - 1] || '')) || (w === '일주' && s[m.index + 2] === '일')) continue;
+        done.add(key); frag = frag || document.createDocumentFragment();
+        const at = m.index + (one ? 1 : 0), b = document.createElement('button');
+        frag.append(s.slice(last, at)); b.type = 'button'; b.className = 'term'; b.dataset.act = 'term'; b.dataset.t = key; b.textContent = w; frag.append(b);
+        last = at + w.length;
+      }
+      if (frag) { frag.append(s.slice(last)); n.replaceWith(frag); }
+    }
+  }
+}
+const GROUP = { 비겁: ['비견', '겁재'], 식상: ['식신', '상관'], 재성: ['편재', '정재'], 관성: ['편관', '정관'], 인성: ['편인', '정인'] };
+const PALACE_KEY = ['연주', '월주', '일주', '시주'];
+// 지금 보는 사람의 사주에서 이 말이 어디 있는지
+function termMine(key, c) {
+  const A = c.analysis, at = [], P = c.pillars;
+  const names = GROUP[key] || [key];
+  A.gods.forEach((g, i) => { if (!g) return; if (names.includes(g.stem.name)) at.push(`${PALACE_KEY[i]} 위 글자 ${P[i][0]}(${g.stem.name})`); if (names.includes(g.branch.name)) at.push(`${PALACE_KEY[i]} 아래 글자 ${P[i][1]}(${g.branch.name})`); });
+  if (Gloss.G[key].c === '십성' && key !== '십성') return at.length ? `${at.join(', ')}에 있어요.` : '원국에는 없어요. 대운·세운으로 이 글자가 들어올 때 이 뜻이 나타난다고 봐요.';
+  const ei = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'].indexOf(key);
+  if (ei >= 0) return `${A.total}글자 중 ${A.count[ei]}개예요.${A.count[ei] === 0 ? ' 빠진 기운이라 채워 주면 좋다고 봐요.' : A.count[ei] >= 3 ? ' 많은 편이라 넘치면 부담이 될 수 있어요.' : ''}`;
+  if (Gloss.G[key].c === '12운성' && key !== '12운성') { const w = A.stages.map((s, i) => s === key ? `${PALACE_KEY[i]}(${P[i][1]})` : '').filter(Boolean); return w.length ? `${w.join(', ')} 자리가 이 상태예요.` : ''; }
+  if (Gloss.G[key].c === '신살' && key !== '삼재') { const w = A.shinsal.filter(s => s.name === key); return w.length ? w.map(s => `${s.at} (${s.base} 기준)`).join(', ') + '에 있어요.' : '원국에는 없어요.'; }
+  const pi = PALACE_KEY.indexOf(key);
+  if (pi >= 0) return P[pi] ? `${key}는 ${P[pi]}(${S.ko(P[pi])}) 기둥이에요. 위쪽 원국 칸을 누르면 글자 뜻을 더 볼 수 있어요.` : '태어난 시간을 몰라서 비어 있어요.';
+  if (key === '일간') return `${P[2][0]} — ${STEM_IMG[P[2][0]]}. ${STEM_TRAIT[P[2][0]]} 기운이에요.`;
+  if (key === '삼재') return `${A.samjae.join('·')}년이 삼재 해예요.`;
+  if (key === '대운수') return `대운수 ${c.daeun.su} — ${c.daeun.su}세부터 10년마다 바뀌어요 (${c.daeun.forward ? '순행' : '역행'}).`;
+  if (key === '대운') { const y = kst(today()).y, d = c.daeun.list.find(x => x.startYear <= y && y <= x.endYear); return d ? `지금은 ${d.gz}(${S.ko(d.gz)}) 대운이에요 (${d.startYear}–${d.endYear}).` : ''; }
+  return '';
+}
+function openTerm(k) {
+  const key = Gloss.key(k), t = key && Gloss.G[key]; if (!t) return;
+  const p = me(), c = p && chartOf(p), mine = c ? termMine(key, c) : '';
+  sheet(`<div class="top"><div><p class="sub">${esc(t.c)} · 쉬운 뜻</p><h2 id="sheetTitle">${esc(key)}</h2></div>${closeBtn()}</div>
+    <p class="lead">${esc(t.s)}</p>
+    <h3>자세히</h3><p>${esc(t.d)}</p>
+    <h3>예를 들면</h3><p>${esc(t.ex)}</p>
+    ${mine ? `<h3>${esc(p.name)}의 사주에서는</h3><p>${esc(mine)}</p>` : ''}
+    <div class="btns"><a class="btn" href="#/chart#gloss" data-act="close">${I('book')}어려운 말 사전 전체</a></div>`, key);
+}
+const BR_SEASON = ['한겨울(양력 12월쯤)', '늦겨울(1월쯤)', '초봄(2월쯤)', '봄(3월쯤)', '늦봄(4월쯤)', '초여름(5월쯤)', '한여름(6월쯤)', '늦여름(7월쯤)', '초가을(8월쯤)', '가을(9월쯤)', '늦가을(10월쯤)', '초겨울(11월쯤)'];
+function openCell(i) {
+  const p = me(), c = chartOf(p), A = c.analysis, g = A.gods[i], P = c.pillars[i]; if (!P) return;
+  const st = P[0], br = P[1], b = S.bi(br), pal = PALACE_KEY[i];
+  const godLine = n => { const x = Gloss.get(n); return x ? `<p>나(일간 ${c.pillars[2][0]})에게 이 글자는 <b>${n}</b> — ${esc(x.s)}.</p><p class="small">${esc(x.d)}</p>` : ''; };
+  const stg = Gloss.get(A.stages[i]), gs = n => (GOD_GL[n] || '').replace(' 기운', '');
+  const one = i === 2 ? `${STEM_IMG[st]} 같은 나, 그리고 ${S.ANIMAL[b]}(${br}) 자리에 ${gs(g.branch.name)} 기운` : `${(Gloss.get(pal).s.split(' — ')[1] || pal)} 자리에 ${gs(g.stem.name)}과 ${gs(g.branch.name)} 기운`;
+  sheet(`<div class="top"><div><p class="sub">${pal} · ${esc(Gloss.get(pal).s.split(' — ')[1] || '')}</p><h2 id="sheetTitle">${hz2(P)} ${S.ko(P)}</h2></div>${closeBtn()}</div>
+    <p class="lead"><b>한마디로</b> ${esc(one)}</p>
+    <h3>위 글자 ${st} (${S.STEM_KO[S.si(st)]}) — ${STEM_IMG[st]}</h3>
+    <p>${S.EL[S.stemEl(S.si(st))]}(${S.EL_HANJA[S.stemEl(S.si(st))]})의 기운이고, ${STEM_TRAIT[st]} 글자예요.</p>
+    ${i === 2 ? `<p>이 글자가 바로 <b>나(일간)</b>예요. 사주의 나머지 일곱 글자는 모두 이 글자와의 관계로 읽어요.</p>` : godLine(g.stem.name)}
+    <h3>아래 글자 ${br} (${S.BRANCH_KO[b]}) — ${S.ANIMAL[b]}, ${BR_SEASON[b]}</h3>
+    <p>${S.EL[S.BR_EL[b]]}(${S.EL_HANJA[S.BR_EL[b]]})의 기운이에요.</p>
+    ${godLine(g.branch.name)}
+    ${stg ? `<h3>이 자리에서 내 힘: ${A.stages[i]}</h3><p>${esc(stg.s)}. ${esc(stg.d)}</p>` : ''}
+    <h3>${pal}라는 자리</h3><p>${esc(Gloss.get(pal).d)}</p>`);
+}
+function glossCard() {
+  if (!window.Gloss) return '';
+  const open = location.hash.split('#')[2] === 'gloss';
+  return `<details class="card fold" id="gloss"${open ? ' open' : ''}><summary class="ch"><h2>${I('book')}어려운 말 사전</h2><span class="sub">${Object.keys(Gloss.G).length}개 · 누르면 쉬운 뜻과 내 사주에서의 자리가 나와요</span></summary>
+    ${Gloss.ORDER.map(cat => `<h3 class="gap-t">${cat}</h3><div class="tlist">${Object.entries(Gloss.G).filter(([, v]) => v.c === cat).map(([k, v]) => `<button type="button" class="tbtn" data-act="term" data-t="${esc(k)}"><b>${esc(k)}</b><span>${esc(v.s)}</span></button>`).join('')}</div>`).join('')}
+  </details>`;
 }
 
 // ── 페이지: 궁합·결혼일 ──
@@ -861,7 +955,7 @@ function pageMatch() {
     </section>
     <section class="card"><div class="ch"><h2>${I('compass')}일간 관계 · ${A.pillars[2][0]}–${B.pillars[2][0]}</h2></div>
       <p class="lead">${esc(relLine)}</p>
-      ${m.gangHwi ? `<p class="lead gap-s">丙(해)과 壬(큰 물)은 일반 명리에서 <b>강휘상영(江暉相映)</b>, "강물 위에 햇빛이 비치는 그림"이라는 좋은 비유로 많이 풀어요. 서로를 돋보이게 한다는 뜻이에요.</p>
+      ${m.gangHwi ? `<p class="lead gap-s">丙(태양)과 壬(큰 물)은 일반 명리에서 <b>강휘상영(江暉相映)</b>, "강물 위에 햇빛이 비치는 그림"이라는 좋은 비유로 많이 풀어요. 서로를 돋보이게 한다는 뜻이에요.</p>
       <p class="note">${I('info')}<span>솔직하게 보면 丙과 壬은 천간 충이기도 하고, 물이 불을 다스리는(수극화) 관계라 긴장도 있어요. 좋은 그림과 긴장이 함께 있는 짝이라, 서로의 속도를 존중하면 장점이 더 커져요.</span></p>` : m.stemHap ? `<p class="note">${I('info')}<span>두 일간이 천간합이라 서로 끌리는 힘이 있어요.</span></p>` : m.stemChung ? `<p class="note">${I('info')}<span>두 일간이 천간 충이라 방식 차이가 드러나기 쉬워요.</span></p>` : ''}
     </section>
   </div>
@@ -928,8 +1022,8 @@ function pageSettings() {
   return `<div class="head"><h1>설정</h1><p>모든 정보는 이 기기 브라우저에만 있어요</p></div>
   <div class="grid g2">
     <section class="card"><div class="ch"><h2>${I('scroll')}프로필</h2><button class="btn" data-act="add">${I('plus')}추가</button></div>
-      <div class="plist">${db.profiles.map(p => `<div class="prof"><div><b>${esc(p.name)}</b> <span class="sub">· ${roleName(p.role)}${p.id === (me() || {}).id ? ' · 기준' : ''}</span><br><span class="small">${p.cal === 'lunar' ? '음력' : '양력'} ${esc(p.date)}${p.leap ? ' 윤달' : ''} · ${timeTxt(p.time)} · ${p.gender === 'F' ? '여' : '남'} · ${esc(p.city || '')}</span></div>
-        <div class="acts"><button class="btn" data-act="edit" data-id="${esc(p.id)}" aria-label="${esc(p.name)} 고치기">${I('pen')}</button><button class="btn danger" data-act="del" data-id="${esc(p.id)}" aria-label="${esc(p.name)} 지우기">${I('trash')}</button></div></div>`).join('') || '<p class="small">아직 프로필이 없어요.</p>'}</div>
+      <div class="plist">${db.profiles.map(p => `<div class="prof"><div><b>${esc(p.name)}</b> <span class="sub">· ${roleName(p.role)}${p.id === (me() || {}).id ? ' · 지금 보는 중' : ''}</span><br><span class="small">${p.cal === 'lunar' ? '음력' : '양력'} ${esc(p.date)}${p.leap ? ' 윤달' : ''} · ${timeTxt(p.time)} · ${p.gender === 'F' ? '여' : '남'} · ${esc(p.city || '')}</span></div>
+        <div class="acts"><button class="btn" data-act="who" data-id="${esc(p.id)}" data-go="home" aria-label="${esc(p.name)} 사주 보기"${p.id === (me() || {}).id ? ' aria-pressed="true"' : ''}>${I('compass')}보기</button><button class="btn" data-act="edit" data-id="${esc(p.id)}" aria-label="${esc(p.name)} 고치기">${I('pen')}</button><button class="btn danger" data-act="del" data-id="${esc(p.id)}" aria-label="${esc(p.name)} 지우기">${I('trash')}</button></div></div>`).join('') || '<p class="small">아직 프로필이 없어요.</p>'}</div>
       <h3 class="gap-t">데이터</h3><p class="small gap-s">서버가 없어요. 가져오기 링크의 정보는 주소의 # 뒤에 있어 인터넷으로 전송되지 않고, 열자마자 이 기기에 저장한 뒤 주소에서 지워요.</p>
       <div class="btns"><button class="btn" data-act="export">${I('download')}내보내기</button><button class="btn" data-act="copylink">${I('link')}링크 복사</button><button class="btn danger" data-act="wipe">${I('trash')}모두 지우기</button></div>
     </section>
@@ -1026,6 +1120,9 @@ document.addEventListener('click', e => {
   else if (a === 'close') $('#sheet').close();
   else if (a === 'hour') { db.settings.hourPick[me().id] = b.dataset.gz; save(); render(); }
   else if (a === 'day') openDay(b.dataset.d);
+  else if (a === 'who') { db.settings.activeId = b.dataset.id; save(); if (b.dataset.go) location.hash = '#/' + b.dataset.go; render(); toast(`${me().name} 사주로 바꿨어요`); const f = $('.whobar [aria-pressed="true"]'); if (f && !b.dataset.go) f.focus(); }
+  else if (a === 'term') { if (!db.settings.termSeen) { db.settings.termSeen = true; save(); const h = $('#main .hint'); if (h) h.remove(); } openTerm(b.dataset.t); }
+  else if (a === 'cell') openCell(+b.dataset.i);
   else if (a === 'tdraw') drawDaily();
   else if (a === 'tthree') openTarot();
   else if (a === 'thist') openTarot(+b.dataset.i);
@@ -1061,8 +1158,8 @@ document.addEventListener('change', e => {
 let planT;
 document.addEventListener('input', e => {
   const k = e.target.dataset && e.target.dataset.plan; if (!k) return;
-  const c = chartOf(me()), v = S.now(c, today(), opts()), key = planKey(v);
-  (db.plans[key] = db.plans[key] || {})[k] = e.target.value.slice(0, 80);
+  const p = me(), c = chartOf(p), v = S.now(c, today(), opts()), key = planKey(v, p);
+  (db.plans[key] = db.plans[key] || { ...plansOf(v, p) })[k] = e.target.value.slice(0, 80);
   $('#pc-' + k).textContent = planComment(e.target.value, v.cls, v.M, k);
   clearTimeout(planT); planT = setTimeout(save, 400);
 });
