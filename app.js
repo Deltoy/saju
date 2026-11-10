@@ -83,16 +83,18 @@ const STAGE_GL = { 장생: '새로 시작하는 힘', 목욕: '꾸미고 드러�
 const godTxt = g => GOD_GL[g.name] ? `${GOD_GL[g.name]}(${g.name})` : g.name;
 const relTxt = r => r.type === '같은 글자' ? r.name : r.name.replace(new RegExp(r.type.replace(' ', '\\s') + '$'), `${REL_GL[r.type]}(${r.type})`);
 const stageTxt = s => `${STAGE_GL[s]}(${s})`;
-const TEN_W = D => D >= 1 ? '좋음' : D >= 0 ? '보통' : '버거움';
-const YEAR_W = Y => Y >= 1 ? '좋음' : Y >= 0 ? '무난' : '엇갈림';
-const NEXT_W = Y => Y >= 1 ? '좋음' : Y >= -2 ? '보통' : '조심';
+// 낱말은 모두 Topics.tone 하나에서 (모순 검사와 같은 기준). 예전 NEXT_W(−2까지 보통)는 같은 해를 흐름 탭과 다르게 불러서 맞춤
+const TP = window.Topics;
+const TEN_W = D => TP.WORD.ten[TP.tone(D)];
+const YEAR_W = Y => TP.WORD.year[TP.tone(Y)];
+const NEXT_W = YEAR_W;
 // 1031 MJ "말이 너무 어려워" → 쉬운 뜻 먼저, 용어는 괄호. 한 문장에 한 가지.
 const SUB = (cls, base) => cls === 'prep' && base !== 'prep' ? { guard: '올해는 지키고, 내년을 준비해요.', push: '올해는 밀고 가되, 내년을 준비해요.', rest: '쉬면서 내년을 준비해요.' }[base]
   : { push: '미뤄 둔 일을 시작해 보세요.', guard: '새 일보다 가진 것을 지켜요.', prep: '정리하고 실력을 쌓아 두세요.', rest: '무리하지 말고 쉬어 가요.' }[cls];
 /** 모든 탭이 같은 낱말을 씀: 10년 흐름 · 올해 · 다음 해 → 분류 */
 function readingChips(D, Y, N) {
   const c = (k, w, v) => `<span class="rd rd-${v}"><span class="rk">${k}</span>${w}</span>`;
-  return `<div class="reading">${c('10년 흐름', TEN_W(D), D >= 1 ? 'g' : D >= 0 ? 'n' : 'b')}${c('올해', YEAR_W(Y), Y >= 1 ? 'g' : Y >= 0 ? 'n' : 'b')}${c('다음 해', NEXT_W(N), N >= 1 ? 'g' : N >= -2 ? 'n' : 'b')}</div>`;
+  return `<div class="reading">${c('10년 흐름', TEN_W(D), TP.tone(D))}${c('올해', YEAR_W(Y), TP.tone(Y))}${c('다음 해', NEXT_W(N), TP.tone(N))}</div>`;
 }
 
 // ── 글자 표시 ──
@@ -360,7 +362,7 @@ function emptyHome() {
     <form class="paste" id="pasteForm"><input type="url" id="pasteIn" placeholder="https://…/#import=…" aria-label="가져오기 링크 붙여넣기" autocomplete="off"><button class="btn" type="submit">${I('link')}가져오기</button></form>
     <button class="btn pri" data-act="add">${I('plus')}직접 입력하기</button></section>`;
 }
-const RD_K = (x, hi = 1, lo = 0) => x >= hi ? 'g' : x >= lo ? 'n' : 'b';
+const RD_K = x => TP.tone(x);
 function periodsHtml(c, v) {
   const yv = S.yearView(c, v.year), Dd = v.D, d = v.daeun, nd = v.nextDaeun;
   return `<div class="periods">
@@ -432,10 +434,49 @@ function pageHome() {
     <div class="alist">${adv.map(a => areaRow(a, plans)).join('')}</div>
   </section>
   </div>
+  ${topicsCard(c, p, v)}
   <div class="hgrid">${todayCard(c, p)}${T ? tarotCard(c, p) : ''}</div>
   <details class="card fold"><summary class="ch"><h2>앞으로 12개월</h2><span class="bar strip" aria-hidden="true">${ms.map(m => `<i class="k-${m.cls}"></i>`).join('')}</span><span class="sub">${esc(monthsSentence(ms, v))}</span></summary>
     <div class="mlist">${ms.map(m => `<div><b class="num">${m.y % 100}.${String(m.m).padStart(2, '0')}</b>${hz2(m.gz)}${clsPill(m.cls)}</div>`).join('')}</div>
   </details>`;
+}
+// ── 올해 주제별 (돈·연애·일·컨디션) + 앞뒤 확인. 판단은 topics.js, 여기선 그리기만 ──
+const TOPIC_ICON = { money: 'wallet', love: 'heart', work: 'zap', health: 'sun' };
+const TONE_K = { g: 'prep', n: 'rest', b: 'guard' };          // 색: 좋음 청록 · 보통 회색 · 조심 주황 (오늘 카드와 같은 짝)
+const gauge = t => `<span class="gauge k-${TONE_K[t]}" aria-hidden="true">${[0, 1, 2].map(i => `<i${TP.LV[t] >= i ? ' class="on"' : ''}></i>`).join('')}</span>`;
+const TREND = { 1: ['up', '내년엔 좋아져요'], 0: ['flat', '내년도 비슷해요'], '-1': ['down', '내년엔 조금 내려가요'] };
+function topicsCard(c, p, v) {
+  const ts = TP.topics(c, v.year, p.gender), r = TP.verify(c, today(), opts(), p.gender);
+  return `<section class="card topics" aria-labelledby="tpT"><div class="ch"><h2 id="tpT">올해 주제별로 보기</h2><span class="sub">${v.year}년 · 누르면 할 일과 이유가 나와요</span></div>
+    <div class="tps">${ts.map(t => `<button type="button" class="tp k-${TONE_K[t.tone]}" data-act="topic" data-k="${t.k}" aria-haspopup="dialog" aria-label="${esc(t.name)}: ${TP.WORD.topic[t.tone]}. ${esc(t.head)}. ${TREND[t.trend][1]}">
+      <span class="tp-h"><span class="tic">${I(TOPIC_ICON[t.k])}</span><span class="tn">${esc(t.name)}</span><span class="tw">${TP.WORD.topic[t.tone]}</span></span>
+      ${gauge(t.tone)}<span class="tp-l">${esc(t.head)}</span>
+      <span class="tp-n tr-${TREND[t.trend][0]}">${I('arrowUp')}${TREND[t.trend][1]}</span></button>`).join('')}</div>
+    <button type="button" class="trust${r.bad.length ? ' warn' : ''}" data-act="trust" aria-haspopup="dialog">${I(r.bad.length ? 'info' : 'check')}<span>${r.bad.length ? `앞뒤 안 맞는 말 ${r.bad.length}개 · 확인 필요` : '앞뒤 안 맞는 말 0개 · 확인 완료'}</span>${I('chev', 'i chev-r')}</button>
+  </section>`;
+}
+function openTopic(k) {
+  const p = me(), c = chartOf(p), v = S.now(c, today(), opts()), t = TP.topics(c, v.year, p.gender).find(x => x.k === k), W = TP.WORD.topic;
+  const li = (cls, ic, txt) => `<li class="${cls}">${I(ic)}<span>${esc(txt)}</span></li>`;
+  const why = [`<li><span class="sg">=</span><span>올해 전체 운 '${TP.WORD.year[t.base]}'에서 시작해요</span></li>`,
+    ...(t.sig.length ? t.sig.map(s => `<li><span class="sg ${s.s > 0 ? 'up' : 'dn'}">${s.s > 0 ? '+' : '−'}</span><span>${esc(s.t)}</span></li>`) : ['<li><span class="sg">=</span><span>올해는 이 주제에 따로 들어오는 신호가 없어요</span></li>']),
+    `<li><span class="sg">→</span><span>그래서 ${esc(josa(t.name, '은/는'))} '${W[t.tone]}'이에요.${t.sig.length ? ' 신호는 한 칸까지만 반영해서 올해 전체 운과 반대로 말하지 않아요.' : ''}</span></li>`];
+  sheet(`<div class="top"><div><p class="sub">${v.year}년 · 올해</p><h2 id="sheetTitle">${esc(t.name)}</h2></div>${closeBtn()}</div>
+    <p class="lead area-l k-${TONE_K[t.tone]}">${esc(t.head)}</p>
+    <div class="tp-yy"><span class="k-${TONE_K[t.tone]}"><span class="rk">올해</span>${gauge(t.tone)}<b>${W[t.tone]}</b></span><span class="k-${TONE_K[t.next]}"><span class="rk">내년</span>${gauge(t.next)}<b>${W[t.next]}</b></span></div>
+    <h3>이렇게 해요</h3><ul class="dos">${t.dos.map(x => li('do', 'check', x)).join('')}</ul>
+    <h3>조심해요</h3><ul class="dos">${t.cares.map(x => li('dont', 'x', x)).join('')}</ul>
+    ${t.safe ? `<p class="note">${I('info')}<span>${esc(t.safe)}</span></p>` : ''}
+    <details class="more"><summary>왜 그렇게 봤나요?</summary><ul class="tp-why">${why.join('')}</ul></details>`);
+}
+function openTrust() {
+  const p = me(), c = chartOf(p), r = TP.verify(c, today(), opts(), p.gender);
+  const ok = t => `<li class="do">${I('check')}<span>${t}</span></li>`;
+  sheet(`<div class="top"><div><p class="sub">${esc(p.name)} · 앞뒤 확인</p><h2 id="sheetTitle">${r.bad.length ? `앞뒤가 다른 곳 ${r.bad.length}개` : '앞뒤가 맞아요'}</h2></div>${closeBtn()}</div>
+    <p class="lead">화면 곳곳의 판단 ${r.n}개를 같은 기간끼리 모아 서로 맞춰 봤어요. 같은 해를 한 곳에선 좋다고, 다른 곳에선 조심하라고 하지 않아요.</p>
+    <ul class="dos">${ok('10년 흐름·해마다 운·다음 해는 모두 같은 점수 기준으로 불러요')}${ok('이번 달 판정과 앞으로 12개월은 같은 달을 같은 말로 불러요')}${ok('주제 카드는 그해 전체 운에서 한 칸까지만 달라요')}${ok('판단과 글의 말투(좋다·조심)가 서로 맞아요')}</ul>
+    ${r.bad.length ? `<ul class="dos">${r.bad.map(b => `<li class="dont">${I('x')}<span>${esc(b.why)}: ${esc(b.xs.map(x => x.src).join(' · '))}</span></li>`).join('')}</ul>` : ''}
+    <p class="small">사주 풀이가 맞는지가 아니라, 이 앱이 한 말끼리 서로 맞는지 보는 확인이에요. 화면을 열 때마다 다시 확인해요.</p>`);
 }
 const PLAN_EX = { move: '비자 서류 목록 만들기', career: '모의고사 2회 풀기', money: '고정비 3개 줄이기', family: '예식장 계약서 확인' };
 const planKey = (v, p) => { const k = kst(v.monthStart), m = `${k.y}-${String(k.m).padStart(2, '0')}`; return p ? p.id + '|' + m : m; };
@@ -1162,6 +1203,8 @@ document.addEventListener('click', e => {
   else if (a === 'day') openDay(b.dataset.d);
   else if (a === 'area') openArea(b.dataset.k);
   else if (a === 'why') openWhy();
+  else if (a === 'topic') openTopic(b.dataset.k);
+  else if (a === 'trust') openTrust();
   else if (a === 'who') { db.settings.activeId = b.dataset.id; save(); if (b.dataset.go) location.hash = '#/' + b.dataset.go; render(); toast(`${me().name} 사주로 바꿨어요`); const f = $('.whobar [aria-pressed="true"]'); if (f && !b.dataset.go) f.focus(); }
   else if (a === 'term') { if (!db.settings.termSeen) { db.settings.termSeen = true; save(); const h = $('#main .hint'); if (h) h.remove(); } openTerm(b.dataset.t); }
   else if (a === 'cell') openCell(+b.dataset.i);
