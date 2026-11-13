@@ -848,6 +848,29 @@ function storyCard(c, p) {
     <details class="more"><summary>이어서 읽기 (${ch.length - 1}장 더)</summary>${ch.slice(1).map((x, i) => part(x, i + 1)).join('')}</details></section>`;
 }
 
+// ── 인연 카드 (1113 MJ "내 미래 배우자 얼굴상이 궁금해") — 재미로. 판단은 topics.js yeon, 그림은 날 글자 오행 × 성별 10장(yeon/), 실행 중 그림 API 없음 ──
+function yeonCard(c, p) {
+  const y = TP.yeon(c, p.gender, S.now(c, today(), opts()).year), seen = (db.settings.yeonSeen || {})[p.id];
+  const img = `<img src="${y.pic}" alt="" width="400" height="400" loading="lazy" decoding="async" onerror="const b=this.parentNode;b.classList.add('fb');if(b.tagName==='BUTTON'){b.removeAttribute('data-act');b.tabIndex=-1;b.setAttribute('aria-label','인연 카드 그림 준비 중')}"><span class="yn-fb" aria-hidden="true">${I('heart')}<span>그림 준비 중</span></span>`;   // 그림이 아직 없으면(제미나이 한도) 오행 색 칸
+  const label = `인연 카드 그림: ${y.face.join(', ')}`;
+  const runs = y.years.reduce((a, Y) => { const l = a[a.length - 1]; if (l && l[1] === Y - 1) l[1] = Y; else a.push([Y, Y]); return a; }, []);   // 이어지는 해는 2028–2031 한 칸
+  const yrs = runs.length ? `<span class="yn-ys">${runs.map(([a, b]) => `<span class="tag good num">${a === b ? a : `${a}–${b}`}</span>`).join('')}</span>`
+    : '<span class="small">가까운 6년엔 크게 튀는 해가 없어요. 평소처럼 만남을 이어 가면 돼요.</span>';
+  const why = [['=', `배우자 자리(날 글자 아래) ${y.br}: ${EL_PLAIN[y.el]} 기운 → 인상·성격과 그림`], ['=', `그 자리에 앉은 기운 ${y.god} → 둘 사이 모습`],
+    ['=', `인연 기운(${y.star}): 타고난 글자에 ${y.stars.length ? uniq(y.stars).join('·') : '없음'} → 만나는 방식`], ['→', `인연이 잘 붙는 해 = 앞으로 6년 중 주제 카드 '연애·관계'가 좋음인 해`]];
+  return `<section class="card yeon" aria-labelledby="ynT"><div class="ch"><h2 id="ynT">${I('heart')}인연 카드</h2><span class="sub">재미로 보는 카드예요 · 배우자 자리의 ${EL_PLAIN[y.el]} 기운으로 그려 봤어요</span></div>
+    <div class="yn">
+      ${seen ? `<figure class="yn-pic on e-${ELC[y.el]}" role="img" aria-label="${esc(label)}">${img}</figure>`
+    : `<button type="button" class="yn-pic e-${ELC[y.el]}" data-act="yeon" data-l="${esc(label)}" aria-label="인연 카드 그림 열어 보기">${img}<span class="yn-veil" aria-hidden="true">${I('heart')}<b>두근두근</b><span>눌러서 열기</span></span></button>`}
+      <div class="yn-face"><p class="yk">이런 인상이에요</p><div class="tags">${y.face.map(w => `<span class="tag">${esc(w)}</span>`).join('')}</div></div>
+      <div class="yn-txt"><p class="lead">${esc(y.mood)}</p><p>${esc(y.bond)} ${esc(y.meet)}</p></div>
+      <div class="yn-when">${I('calendar')}<div><b>인연이 잘 붙는 해</b>${yrs}</div></div>
+    <details class="more yn-more"><summary>왜 이렇게 봤나요?</summary><ul class="tp-why">${why.map(([g, t]) => `<li><span class="sg">${g}</span><span>${esc(t)}</span></li>`).join('')}</ul>
+      <p class="small gap-t">사주로 누구를 만날지 정해지지 않아요. 남자는 재성, 여자는 관성을 인연 기운으로 보는 전통 방식을 따랐어요. 그림은 기운의 분위기를 표현한 것이고, 실제 사람과 닮게 그리지 않았어요. 사진은 받지도 저장하지도 않아요.</p></details>
+    </div>
+  </section>`;
+}
+
 // ── 페이지: 내 사주 ──
 const STAGE_SHORT = { 장생: '시작', 목욕: '꾸밈', 관대: '채비', 건록: '자립', 제왕: '한창', 쇠: '노련', 병: '쉼', 사: '마무리', 묘: '저장', 절: '끊고 잇기', 태: '씨앗', 양: '자람' };
 function pillarCells(c, compact) {
@@ -884,6 +907,7 @@ function pageChart() {
       <span>칸 속 쉬운 말은 십성(${uniq(A.gods.filter(Boolean).flatMap(g => [g.stem.name, g.branch.name]).filter(n => GOD_GL[n])).join('·')})과 12운성을 줄인 말이에요.</span></div></details>
   </section>
   ${storyCard(c, p)}
+  ${yeonCard(c, p)}
   <div class="grid g2">
     <section class="card"><div class="ch"><h2>다섯 기운</h2><span class="sub">여덟 글자 속 나무·불·흙·쇠·물</span></div>
       <div class="bars">${A.count.map((n, e) => `<div class="b e-${ELC[e]}"><span><i class="dot"></i>${elName(e)}</span><span class="t"><i style="width:${n / A.total * 100}%"></i></span><span class="num">${n}</span></div>`).join('')}</div>
@@ -1208,6 +1232,7 @@ document.addEventListener('click', e => {
   else if (a === 'who') { db.settings.activeId = b.dataset.id; save(); if (b.dataset.go) location.hash = '#/' + b.dataset.go; render(); toast(`${me().name} 사주로 바꿨어요`); const f = $('.whobar [aria-pressed="true"]'); if (f && !b.dataset.go) f.focus(); }
   else if (a === 'term') { if (!db.settings.termSeen) { db.settings.termSeen = true; save(); const h = $('#main .hint'); if (h) h.remove(); } openTerm(b.dataset.t); }
   else if (a === 'cell') openCell(+b.dataset.i);
+  else if (a === 'yeon') { (db.settings.yeonSeen = db.settings.yeonSeen || {})[me().id] = 1; save(); b.classList.add('on'); b.removeAttribute('data-act'); b.tabIndex = -1; b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-label', b.dataset.l || '인연 카드 그림'); }
   else if (a === 'tdraw') drawDaily();
   else if (a === 'tthree') openTarot();
   else if (a === 'thist') openTarot(+b.dataset.i);

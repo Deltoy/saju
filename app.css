@@ -433,6 +433,47 @@ button.pillar:focus-visible { outline: 2px solid var(--pri); outline-offset: -2p
 .rb { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--ink3); flex: none; }
 .seg.pick button[aria-pressed="true"] .rb { border: 5px solid var(--pri); }
 .story details.more { margin-top: 6px; }
+
+/* 인연 카드 (1113) — 그림 + 인상 칩 + 성격 + 잘 붙는 해. 폰: 그림 옆 칩 / 넓으면: 그림 왼쪽 세로 한 줄 */
+.yeon .ch h2 { display: flex; align-items: center; gap: 8px; }
+.yeon .ch h2 svg { color: var(--fire-t); }
+.yn { display: grid; grid-template-columns: 128px minmax(0, 1fr); grid-template-areas: "pic face" "txt txt" "when when" "more more"; gap: 14px; align-items: start; }
+.yn-pic { grid-area: pic; position: relative; display: block; width: 100%; aspect-ratio: 1; margin: 0; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: var(--sunk); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+button.yn-pic { cursor: pointer; }
+.yn-pic img { width: 100%; height: 100%; object-fit: cover; display: block; filter: blur(12px) saturate(.7); transform: scale(1.15); }
+.yn-pic.on img { filter: none; transform: none; }
+.yn-pic.fb img { visibility: hidden; }
+.yn-fb { display: none; }
+.yn-pic.fb { background: color-mix(in srgb, var(--e) 14%, var(--card)); }
+.yn-pic.fb .yn-fb { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; color: var(--et); font-size: 12.5px; font-weight: 600; }
+.yn-pic.fb .yn-fb svg { width: 30px; height: 30px; }
+.yn-pic.fb .yn-veil { display: none; }
+.yn-veil { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2px; color: #fff; background: linear-gradient(rgba(0, 0, 0, .28), rgba(0, 0, 0, .28)), color-mix(in srgb, var(--fire) 38%, transparent); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); font-size: 13px; font-weight: 600; }
+.yn-veil b { font-size: 15px; font-weight: 750; }
+.yn-veil svg { width: 30px; height: 30px; fill: #fff; stroke: #fff; }
+.yn-pic.on .yn-veil { opacity: 0; pointer-events: none; }
+.yn-pic.on .yn-veil svg { transform: scale(2.4); }
+.yn-face { grid-area: face; display: grid; gap: 8px; align-content: start; }
+.yk { font-size: 12.5px; font-weight: 600; color: var(--ink3); }
+.yn-txt { grid-area: txt; display: grid; gap: 6px; }
+.yn-txt p:not(.lead) { font-size: 15px; line-height: 1.65; color: var(--ink2); }
+.yn-when { grid-area: when; display: flex; gap: 10px; padding: 12px 14px; border-radius: var(--rs); background: var(--sunk); }
+.yn-when > svg { color: var(--prep); margin-top: 2px; }
+.yn-when > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.yn-when b { font-size: 14.5px; }
+.yn-ys { display: flex; flex-wrap: wrap; gap: 6px; }
+.yn-more { grid-area: more; }
+@container main (min-width: 700px) {
+  .yn { grid-template-columns: 200px minmax(0, 1fr); grid-template-areas: "pic face" "pic txt" "pic when" "pic more"; grid-template-rows: auto auto auto 1fr; column-gap: 20px; row-gap: 12px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .yn-pic img { transition: filter .7s var(--ease), transform .7s var(--ease); }
+  .yn-veil, .yn-veil svg { transition: opacity .45s var(--ease), transform .45s var(--ease); }
+  button.yn-pic:not(.on) .yn-veil svg { animation: beat 1.6s var(--ease) infinite; }
+}
+@keyframes beat { 0%, 60%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1.04); } 45% { transform: scale(1.14); } }
+@media (hover: hover) { button.yn-pic:not(.on):hover .yn-veil { background: linear-gradient(rgba(0, 0, 0, .34), rgba(0, 0, 0, .34)), color-mix(in srgb, var(--fire) 44%, transparent); } }
+button.yn-pic:focus-visible { outline: 3px solid var(--pri); outline-offset: 2px; }
 .bars { display: grid; gap: 10px; }
 .bars .b { display: grid; grid-template-columns: 70px minmax(0, 1fr) 24px; align-items: center; gap: 10px; font-size: 14px; }
 .bars .t { height: 10px; background: var(--sunk); border-radius: 5px; overflow: hidden; }
